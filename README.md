@@ -44,9 +44,9 @@ Ce site web vise à :
 │   ├── navbar.css       # Styles de la navigation
 │   └── footer.css       # Styles du footer
 ├── js/
-│   ├── main.js          # Configuration Locomotive Scroll
+│   ├── main.js          # Configuration générale et Locomotive Scroll
 │   ├── navbar.js        # Logique de navigation
-│   └── footer.js        # Logique du footer et newsletter
+│   └── footer.js        # Logique du footer
 ├── includes/
 │   ├── navbar.php       # Template de la navbar
 │   └── footer.php       # Template du footer
