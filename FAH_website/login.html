@@ -258,6 +258,9 @@
         Cet espace est réservé aux membres de l'association.<br>
         Si vous avez oublié vos identifiants, merci de nous contacter.
       </p>
+      <p style="text-align: center; margin-top: 20px; font-size: 0.875rem;">
+        <a href="#" id="forgot-password" style="color: #666; text-decoration: none; transition: color 0.2s;">Mot de passe oublié ?</a>
+      </p>
     </div>
   </div>
 
@@ -351,6 +354,25 @@
     
     document.getElementById('password').addEventListener('input', () => {
       errorMsg.classList.remove('show');
+    });
+    // Mot de passe oublié
+    document.getElementById('forgot-password').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = prompt("Entrez votre adresse email pour réinitialiser votre mot de passe :");
+  
+      if (email && email.trim()) {
+        try {
+          const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+            redirectTo: 'https://fah-web.vercel.app/FAH_website/reset-password.html'
+          });
+      
+        if (error) throw error;
+      
+        alert("✓ Un email de réinitialisation a été envoyé à " + email);
+      } catch (error) {
+        alert("Erreur : " + error.message);
+        } 
+      }
     });
   </script>
 </body>
