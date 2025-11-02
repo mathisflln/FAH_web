@@ -346,75 +346,35 @@
 
     /***** Load documents (recent first) *****/
     async function loadDocuments() {
-      const container = document.getElementById('document-grid');
-      container.innerHTML = '<p class="empty-text">Chargement des documents…</p>';
-      try {
-        const { data: docs, error } = await supabase
-          .from('documents_meta')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(12);
+  const container = document.getElementById('document-grid');
+  container.innerHTML = '<p class="empty-text">Chargement des documents…</p>';
+  try {
+    const { data: docs, error } = await supabase
+      .from('documents_meta')
+      .select('*')
+      .limit(12);
 
-        if (error) {
-          console.error('loadDocuments error', error);
-          container.innerHTML = '<p class="empty-text">Impossible de charger les documents.</p>';
-          return;
-        }
+    console.log('📄 Documents récupérés:', docs);
+    console.log('❌ Erreur:', error);
 
-        if (!docs || docs.length === 0) {
-          container.innerHTML = `<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-title">Aucun document</div><div class="empty-text">Aucun document n'a encore été ajouté.</div></div>`;
-          return;
-        }
-
-        container.innerHTML = '';
-        docs.forEach(doc => {
-          // get public url (assumes bucket 'documents' is public)
-          const { publicUrl } = supabase.storage.from('documents').getPublicUrl(doc.filename || doc.filepath || doc.storage_path || '');
-          const card = document.createElement('div');
-          card.className = 'document-card';
-          card.innerHTML = `
-            <div class="document-header">
-              <div class="document-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              </div>
-              <div class="document-info">
-                <div class="document-title">${escapeHtml(doc.title || doc.filename || 'Sans titre')}</div>
-                <div class="document-meta">${timeAgo(doc.created_at)}</div>
-              </div>
-            </div>
-            <div class="document-footer">
-              <span class="document-type">${getFileType(doc.filename)}</span>
-              <div class="document-actions">
-                <button class="action-btn btn-download" title="Télécharger" data-url="${publicUrl}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                </button>
-              </div>
-            </div>
-          `;
-          // card click opens document (unless click on action button)
-          card.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-download')) return;
-            if (publicUrl) window.open(publicUrl, '_blank');
-            else alert('URL du document introuvable.');
-          });
-
-          container.appendChild(card);
-        });
-
-        // attach download handlers
-        container.querySelectorAll('.btn-download').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const url = btn.getAttribute('data-url');
-            if (url) window.open(url, '_blank');
-            else alert('Lien non disponible');
-          });
-        });
-      } catch (err) {
-        console.error('loadDocuments unexpected', err);
-        container.innerHTML = '<p class="empty-text">Erreur lors du chargement des documents.</p>';
-      }
+    if (error) {
+      container.innerHTML = `<p class="empty-text">Erreur: ${error.message}</p>`;
+      return;
     }
+
+    if (!docs || docs.length === 0) {
+      container.innerHTML = `<p class="empty-text">Aucun document trouvé dans la base.</p>`;
+      return;
+    }
+
+    // Si on arrive ici, affiche juste le nombre de docs
+    container.innerHTML = `<p class="empty-text">✅ ${docs.length} documents trouvés ! Regarde la console.</p>`;
+
+  } catch (err) {
+    console.error('💥 Erreur:', err);
+    container.innerHTML = `<p class="empty-text">Exception: ${err.message}</p>`;
+  }
+}
 
     /***** Load quizzes and wire start action *****/
     async function loadQuizzes() {
