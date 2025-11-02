@@ -9,515 +9,94 @@
   <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: "Host Grotesk", sans-serif;
-      background: #f8f9fa;
-      min-height: 100vh;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 280px;
-      background: #ffffff;
-      border-right: 1px solid #e5e5e5;
-      display: flex;
-      flex-direction: column;
-      z-index: 100;
-    }
-
-    .sidebar-header {
-      padding: 24px;
-      border-bottom: 1px solid #e5e5e5;
-    }
-
-    .sidebar-logo {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-    }
-
-    .sidebar-logo img {
-      height: 40px;
-      width: auto;
-    }
-
-    .sidebar-nav {
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-    }
-
-    .nav-section {
-      margin-bottom: 32px;
-    }
-
-    .nav-section-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: #999;
-      margin-bottom: 8px;
-      padding: 0 12px;
-      letter-spacing: 0.5px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      margin-bottom: 4px;
-      border-radius: 8px;
-      color: #666;
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .nav-item:hover {
-      background: #f8f9fa;
-      color: #0d0d0d;
-    }
-
-    .nav-item.active {
-      background: #0d0d0d;
-      color: #ffffff;
-    }
-
-    .nav-item svg {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-
-    .sidebar-footer {
-      padding: 16px;
-      border-top: 1px solid #e5e5e5;
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 8px 12px;
-      margin-bottom: 8px;
-    }
-
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      color: #0d0d0d;
-      font-size: 0.9rem;
-    }
-
-    .user-details {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .user-name {
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #0d0d0d;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-role {
-      font-size: 0.75rem;
-      color: #999;
-    }
-
-    .btn-logout {
-      width: 100%;
-      padding: 10px 12px;
-      background: transparent;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      color: #666;
-      font-family: "Host Grotesk", sans-serif;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-logout:hover {
-      background: #fee;
-      border-color: #fcc;
-      color: #c33;
-    }
-
-    /* MAIN CONTENT */
-    .main-content {
-      margin-left: 280px;
-      padding: 32px;
-      min-height: 100vh;
-    }
-
-    .page-header {
-      margin-bottom: 32px;
-    }
-
-    .page-title {
-      font-size: 2rem;
-      font-weight: 600;
-      color: #0d0d0d;
-      margin-bottom: 8px;
-    }
-
-    .page-subtitle {
-      font-size: 1rem;
-      color: #666;
-      font-weight: 300;
-    }
-
-    /* STATS CARDS */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-
-    .stat-card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px;
-      border: 1px solid #e5e5e5;
-      transition: all 0.2s ease;
-    }
-
-    .stat-card:hover {
-      border-color: #FBE01D;
-      box-shadow: 0 4px 12px rgba(251, 224, 29, 0.15);
-    }
-
-    .stat-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-    }
-
-    .stat-icon svg {
-      width: 20px;
-      height: 20px;
-      color: #0d0d0d;
-    }
-
-    .stat-value {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #0d0d0d;
-      margin-bottom: 4px;
-    }
-
-    .stat-label {
-      font-size: 0.875rem;
-      color: #666;
-    }
-
-    /* CONTENT SECTIONS */
-    .content-section {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px;
-      border: 1px solid #e5e5e5;
-      margin-bottom: 24px;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #0d0d0d;
-    }
-
-    .btn-view-all {
-      font-size: 0.875rem;
-      color: #666;
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
-
-    .btn-view-all:hover {
-      color: #0d0d0d;
-    }
-
-    /* DOCUMENT GRID */
-    .document-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
-    }
-
-    .document-card {
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 20px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 1px solid transparent;
-    }
-
-    .document-card:hover {
-      background: #ffffff;
-      border-color: #e5e5e5;
-      transform: translateY(-2px);
-    }
-
-    .document-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .document-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .document-icon svg {
-      width: 18px;
-      height: 18px;
-      color: #0d0d0d;
-    }
-
-    .document-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .document-title {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #0d0d0d;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .document-meta {
-      font-size: 0.8rem;
-      color: #999;
-    }
-
-    .document-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e5e5;
-    }
-
-    .document-type {
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: #e5e5e5;
-      color: #666;
-      font-weight: 500;
-    }
-
-    .document-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .action-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: transparent;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      color: #666;
-    }
-
-    .action-btn:hover {
-      background: #e5e5e5;
-      color: #0d0d0d;
-    }
-
-    .action-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    /* QUIZ LIST */
-    .quiz-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .quiz-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 1px solid transparent;
-    }
-
-    .quiz-item:hover {
-      background: #ffffff;
-      border-color: #e5e5e5;
-      transform: translateX(4px);
-    }
-
-    .quiz-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .quiz-icon svg {
-      width: 24px;
-      height: 24px;
-      color: #0d0d0d;
-    }
-
-    .quiz-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .quiz-title {
-      font-size: 1rem;
-      font-weight: 500;
-      color: #0d0d0d;
-      margin-bottom: 4px;
-    }
-
-    .quiz-description {
-      font-size: 0.875rem;
-      color: #666;
-      margin-bottom: 8px;
-    }
-
-    .quiz-meta {
-      display: flex;
-      gap: 16px;
-      font-size: 0.8rem;
-      color: #999;
-    }
-
-    .quiz-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-
-    .status-badge {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .status-badge.pending {
-      background: #FBE01D;
-    }
-
-    .status-badge.completed {
-      background: #4ade80;
-    }
-
-    /* RESPONSIVE */
+    /* --- (TON CSS INCHANGÉ) --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Host Grotesk", sans-serif; background: #f8f9fa; min-height: 100vh; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: #ffffff; border-right: 1px solid #e5e5e5; display: flex; flex-direction: column; z-index: 100; }
+    .sidebar-header { padding: 24px; border-bottom: 1px solid #e5e5e5; }
+    .sidebar-logo { display: flex; align-items: center; text-decoration: none; }
+    .sidebar-logo img { height: 40px; width: auto; }
+    .sidebar-nav { flex: 1; padding: 16px; overflow-y: auto; }
+    .nav-section { margin-bottom: 32px; }
+    .nav-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #999; margin-bottom: 8px; padding: 0 12px; letter-spacing: 0.5px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 4px; border-radius: 8px; color: #666; text-decoration: none; font-size: 0.9rem; transition: all 0.2s ease; cursor: pointer; }
+    .nav-item:hover { background: #f8f9fa; color: #0d0d0d; }
+    .nav-item.active { background: #0d0d0d; color: #ffffff; }
+    .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .sidebar-footer { padding: 16px; border-top: 1px solid #e5e5e5; }
+    .user-info { display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-bottom: 8px; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #0d0d0d; font-size: 0.9rem; }
+    .user-details { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 500; color: #0d0d0d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 0.75rem; color: #999; }
+    .btn-logout { width: 100%; padding: 10px 12px; background: transparent; border: 1px solid #e5e5e5; border-radius: 8px; color: #666; font-family: "Host Grotesk", sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-logout:hover { background: #fee; border-color: #fcc; color: #c33; }
+    .main-content { margin-left: 280px; padding: 32px; min-height: 100vh; }
+    .page-header { margin-bottom: 32px; }
+    .page-title { font-size: 2rem; font-weight: 600; color: #0d0d0d; margin-bottom: 8px; }
+    .page-subtitle { font-size: 1rem; color: #666; font-weight: 300; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .stat-card { background: #ffffff; border-radius: 12px; padding: 24px; border: 1px solid #e5e5e5; transition: all 0.2s ease; }
+    .stat-card:hover { border-color: #FBE01D; box-shadow: 0 4px 12px rgba(251, 224, 29, 0.15); }
+    .stat-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .stat-icon svg { width: 20px; height: 20px; color: #0d0d0d; }
+    .stat-value { font-size: 1.75rem; font-weight: 600; color: #0d0d0d; margin-bottom: 4px; }
+    .stat-label { font-size: 0.875rem; color: #666; }
+    .content-section { background: #ffffff; border-radius: 12px; padding: 24px; border: 1px solid #e5e5e5; margin-bottom: 24px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .section-title { font-size: 1.25rem; font-weight: 600; color: #0d0d0d; }
+    .btn-view-all { font-size: 0.875rem; color: #666; text-decoration: none; transition: color 0.2s ease; }
+    .btn-view-all:hover { color: #0d0d0d; }
+    .document-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .document-card { background: #f8f9fa; border-radius: 10px; padding: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
+    .document-card:hover { background: #ffffff; border-color: #e5e5e5; transform: translateY(-2px); }
+    .document-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .document-icon { width: 36px; height: 36px; border-radius: 8px; background: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .document-icon svg { width: 18px; height: 18px; color: #0d0d0d; }
+    .document-info { flex: 1; min-width: 0; }
+    .document-title { font-size: 0.95rem; font-weight: 500; color: #0d0d0d; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .document-meta { font-size: 0.8rem; color: #999; }
+    .document-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e5e5; }
+    .document-type { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; background: #e5e5e5; color: #666; font-weight: 500; }
+    .document-actions { display: flex; gap: 8px; }
+    .action-btn { width: 28px; height: 28px; border-radius: 6px; background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; color: #666; }
+    .action-btn:hover { background: #e5e5e5; color: #0d0d0d; }
+    .action-btn svg { width: 16px; height: 16px; }
+    .quiz-list { display: flex; flex-direction: column; gap: 12px; }
+    .quiz-item { display: flex; align-items: center; gap: 16px; padding: 16px; background: #f8f9fa; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
+    .quiz-item:hover { background: #ffffff; border-color: #e5e5e5; transform: translateX(4px); }
+    .quiz-icon { width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .quiz-icon svg { width: 24px; height: 24px; color: #0d0d0d; }
+    .quiz-content { flex: 1; min-width: 0; }
+    .quiz-title { font-size: 1rem; font-weight: 500; color: #0d0d0d; margin-bottom: 4px; }
+    .quiz-description { font-size: 0.875rem; color: #666; margin-bottom: 8px; }
+    .quiz-meta { display: flex; gap: 16px; font-size: 0.8rem; color: #999; }
+    .quiz-status { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 500; }
+    .status-badge { width: 8px; height: 8px; border-radius: 50%; }
+    .status-badge.pending { background: #FBE01D; }
+    .status-badge.completed { background: #4ade80; }
     @media (max-width: 1024px) {
-      .sidebar {
-        transform: translateX(-280px);
-        transition: transform 0.3s ease;
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .main-content {
-        margin-left: 0;
-      }
+      .sidebar { transform: translateX(-280px); transition: transform 0.3s ease; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
     }
+    .empty-state { text-align: center; padding: 48px 24px; }
+    .empty-icon { width: 64px; height: 64px; margin: 0 auto 16px; opacity: 0.3; }
+    .empty-title { font-size: 1.1rem; font-weight: 500; color: #0d0d0d; margin-bottom: 8px; }
+    .empty-text { font-size: 0.9rem; color: #999; }
 
-    /* EMPTY STATE */
-    .empty-state {
-      text-align: center;
-      padding: 48px 24px;
-    }
-
-    .empty-icon {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 16px;
-      opacity: 0.3;
-    }
-
-    .empty-title {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: #0d0d0d;
-      margin-bottom: 8px;
-    }
-
-    .empty-text {
-      font-size: 0.9rem;
-      color: #999;
-    }
+    /* Quick modal for quizzes */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 200; }
+    .modal { width: 100%; max-width: 720px; background: white; border-radius: 12px; padding: 20px; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .modal-question { font-weight:600; margin-bottom:12px; }
+    .options { display:flex; flex-direction:column; gap:8px; }
+    .option-btn { padding:12px; border-radius:8px; border:1px solid #e5e5e5; background:#fafafa; cursor:pointer; text-align:left;}
+    .option-btn.selected { background:#0d6efd; color:white; border-color:transparent; }
+    .modal-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+    .btn { padding:10px 14px; border-radius:8px; border:none; cursor:pointer; }
+    .btn.primary { background:#0d0d0d; color:#fff; }
+    .btn.ghost { background:transparent; border:1px solid #e5e5e5; }
   </style>
 </head>
 <body>
@@ -533,27 +112,15 @@
       <div class="nav-section">
         <div class="nav-section-title">Navigation</div>
         <a class="nav-item active" data-page="dashboard">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>Tableau de bord</span>
         </a>
         <a class="nav-item" data-page="documents">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
           <span>Documents</span>
         </a>
         <a class="nav-item" data-page="quiz">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
           <span>Quiz</span>
         </a>
       </div>
@@ -561,19 +128,11 @@
       <div class="nav-section">
         <div class="nav-section-title">Ressources</div>
         <a class="nav-item" data-page="formations">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           <span>Formations</span>
         </a>
         <a class="nav-item" data-page="calendar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
           <span>Calendrier</span>
         </a>
       </div>
@@ -588,11 +147,7 @@
         </div>
       </div>
       <button class="btn-logout" id="logout">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-          <polyline points="16 17 21 12 16 7"></polyline>
-          <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         Se déconnecter
       </button>
     </div>
@@ -610,45 +165,33 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
         </div>
-        <div class="stat-value">12</div>
+        <div class="stat-value" id="stat-docs">—</div>
         <div class="stat-label">Documents disponibles</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         </div>
-        <div class="stat-value">3</div>
+        <div class="stat-value" id="stat-quizzes">—</div>
         <div class="stat-label">Quiz en attente</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         </div>
-        <div class="stat-value">87%</div>
+        <div class="stat-value" id="stat-completion">—</div>
         <div class="stat-label">Taux de complétion</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         </div>
-        <div class="stat-value">24</div>
+        <div class="stat-value" id="stat-completed">—</div>
         <div class="stat-label">Formations complétées</div>
       </div>
     </div>
@@ -657,89 +200,10 @@
     <div class="content-section">
       <div class="section-header">
         <h2 class="section-title">Documents récents</h2>
-        <a href="#" class="btn-view-all">Voir tout →</a>
+        <a href="#" class="btn-view-all" id="view-all-docs">Voir tout →</a>
       </div>
-      <div class="document-grid">
-        <div class="document-card">
-          <div class="document-header">
-            <div class="document-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-            </div>
-            <div class="document-info">
-              <div class="document-title">Guide de prévention 2024</div>
-              <div class="document-meta">Ajouté il y a 2 jours</div>
-            </div>
-          </div>
-          <div class="document-footer">
-            <span class="document-type">PDF</span>
-            <div class="document-actions">
-              <button class="action-btn" title="Télécharger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="document-card">
-          <div class="document-header">
-            <div class="document-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-            </div>
-            <div class="document-info">
-              <div class="document-title">Procédures d'intervention</div>
-              <div class="document-meta">Ajouté il y a 5 jours</div>
-            </div>
-          </div>
-          <div class="document-footer">
-            <span class="document-type">DOCX</span>
-            <div class="document-actions">
-              <button class="action-btn" title="Télécharger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="document-card">
-          <div class="document-header">
-            <div class="document-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-            </div>
-            <div class="document-info">
-              <div class="document-title">Statistiques annuelles</div>
-              <div class="document-meta">Ajouté il y a 1 semaine</div>
-            </div>
-          </div>
-          <div class="document-footer">
-            <span class="document-type">XLSX</span>
-            <div class="document-actions">
-              <button class="action-btn" title="Télécharger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+      <div class="document-grid" id="document-grid">
+        <!-- Documents will be injected here -->
       </div>
     </div>
 
@@ -747,153 +211,465 @@
     <div class="content-section">
       <div class="section-header">
         <h2 class="section-title">Quiz disponibles</h2>
-        <a href="#" class="btn-view-all">Voir tout →</a>
+        <a href="#" class="btn-view-all" id="view-all-quizzes">Voir tout →</a>
       </div>
-      <div class="quiz-list">
-        <div class="quiz-item">
-          <div class="quiz-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
-          <div class="quiz-content">
-            <div class="quiz-title">Sensibilisation au harcèlement scolaire</div>
-            <div class="quiz-description">Évaluez vos connaissances sur les signes et la prévention</div>
-            <div class="quiz-meta">
-              <span>15 questions</span>
-              <span>•</span>
-              <span>~10 minutes</span>
-            </div>
-          </div>
-          <div class="quiz-status">
-            <span class="status-badge pending"></span>
-            <span>À faire</span>
-          </div>
-        </div>
-
-        <div class="quiz-item">
-          <div class="quiz-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
-          <div class="quiz-content">
-            <div class="quiz-title">Protocole d'intervention</div>
-            <div class="quiz-description">Testez votre compréhension des procédures</div>
-            <div class="quiz-meta">
-              <span>12 questions</span>
-              <span>•</span>
-              <span>~8 minutes</span>
-            </div>
-          </div>
-          <div class="quiz-status">
-            <span class="status-badge completed"></span>
-            <span>Complété - 92%</span>
-          </div>
-        </div>
-
-        <div class="quiz-item">
-          <div class="quiz-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
-          <div class="quiz-content">
-            <div class="quiz-title">Accompagnement des victimes</div>
-            <div class="quiz-description">Formation sur l'écoute et le soutien</div>
-            <div class="quiz-meta">
-              <span>20 questions</span>
-              <span>•</span>
-              <span>~15 minutes</span>
-            </div>
-          </div>
-          <div class="quiz-status">
-            <span class="status-badge pending"></span>
-            <span>À faire</span>
-          </div>
-        </div>
+      <div class="quiz-list" id="quiz-list">
+        <!-- Quizzes injected here -->
       </div>
     </div>
   </main>
 
+  <!-- QUIZ MODAL -->
+  <div class="modal-backdrop" id="quiz-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h3 id="modal-title">Quiz</h3>
+        <button class="btn ghost" id="close-modal">Fermer</button>
+      </div>
+      <div id="modal-body">
+        <!-- question content -->
+      </div>
+      <div class="modal-footer">
+        <div id="modal-progress"></div>
+        <div>
+          <button class="btn ghost" id="prev-q">Précédent</button>
+          <button class="btn primary" id="next-q">Suivant</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    /***** CONFIG (déjà fournies dans ton fichier) *****/
     const SUPABASE_URL = "https://ckfdysasgawyixbxjyfz.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZmR5c2FzZ2F3eWl4YnhqeWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5ODg1NjcsImV4cCI6MjA3NzU2NDU2N30.t0ubaRk5sz7kewyEsOg4CpFvj47S9U1J1SP_3DQBmE8";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Vérifier l'authentification
-    async function checkAuth() {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        window.location.href = "login.html";
-      } else {
-        // Afficher les informations utilisateur
-        const email = data.user.email;
-        const name = email.split('@')[0];
+    /***** UTIL: format relative time (fr) *****/
+    function timeAgo(dateString) {
+      if (!dateString) return '';
+      const d = new Date(dateString);
+      const now = new Date();
+      const s = Math.floor((now - d) / 1000);
+      if (s < 60) return 'à l\'instant';
+      const m = Math.floor(s/60);
+      if (m < 60) return `${m} minute${m>1?'s':''} ago`;
+      const h = Math.floor(m/60);
+      if (h < 24) return `${h} heure${h>1?'s':''} ago`;
+      const days = Math.floor(h/24);
+      if (days < 7) return `Ajouté il y a ${days} jour${days>1?'s':''}`;
+      return d.toLocaleDateString('fr-FR');
+    }
+
+    /***** AUTH CHECK and user display *****/
+    async function checkAuthAndLoad() {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!data.user) {
+          // Not authenticated -> redirect to login
+          window.location.href = "login.html";
+          return;
+        }
+
+        const email = data.user.email || '';
+        const name = email.split('@')[0] || 'Membre';
         const initials = name.charAt(0).toUpperCase();
-        
+
         document.getElementById('user-name').textContent = name;
         document.getElementById('user-avatar').textContent = initials;
         document.getElementById('welcome-name').textContent = name;
+
+        // once authenticated, load data
+        await Promise.all([loadStats(), loadDocuments(), loadQuizzes()]);
+      } catch (err) {
+        console.error('Auth error', err);
+        window.location.href = "login.html";
       }
     }
 
-    checkAuth();
-
-    // Déconnexion
+    // logout
     document.getElementById('logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
       window.location.href = "login.html";
     });
 
-    // Navigation
+    /***** Load stats (documents count, quizzes count, completion rate) *****/
+    async function loadStats() {
+      try {
+        // documents count
+        const { count: docsCount, error: docsErr } = await supabase
+          .from('documents_meta')
+          .select('id', { count: 'exact', head: true });
+
+        if (docsErr && docsErr.code !== 'PGRST116') { // PGRST116: table not found (handled)
+          console.error('documents_meta error', docsErr);
+        }
+        document.getElementById('stat-docs').textContent = docsCount ?? '0';
+
+        // quizzes count
+        const { count: qCount, error: qErr } = await supabase
+          .from('quizzes')
+          .select('id', { count: 'exact', head: true });
+
+        if (qErr && qErr.code !== 'PGRST116') {
+          console.error('quizzes error', qErr);
+        }
+        document.getElementById('stat-quizzes').textContent = qCount ?? '0';
+
+        // completion stats from quiz_results (if table exists)
+        let completionPct = '—';
+        let completedCount = '—';
+        try {
+          const { data: totalQuizzes } = await supabase.from('quizzes').select('id');
+          const total = Array.isArray(totalQuizzes) ? totalQuizzes.length : 0;
+
+          const { count: resultsCount } = await supabase
+            .from('quiz_results')
+            .select('id', { count: 'exact', head: true });
+
+          // compute completion percentage as (resultsCount / (total * active users?)) heuristic
+          // we'll show completedCount as resultsCount
+          completionPct = resultsCount ? `${Math.round((resultsCount / (total || 1)) * 10) }%` : '0%';
+          completedCount = resultsCount ?? 0;
+        } catch (e) {
+          // table might not exist: ignore
+          completionPct = '—';
+          completedCount = '—';
+        }
+
+        document.getElementById('stat-completion').textContent = completionPct;
+        document.getElementById('stat-completed').textContent = completedCount;
+      } catch (err) {
+        console.error('loadStats error', err);
+      }
+    }
+
+    /***** Load documents (recent first) *****/
+    async function loadDocuments() {
+      const container = document.getElementById('document-grid');
+      container.innerHTML = '<p class="empty-text">Chargement des documents…</p>';
+      try {
+        const { data: docs, error } = await supabase
+          .from('documents_meta')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(12);
+
+        if (error) {
+          console.error('loadDocuments error', error);
+          container.innerHTML = '<p class="empty-text">Impossible de charger les documents.</p>';
+          return;
+        }
+
+        if (!docs || docs.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-title">Aucun document</div><div class="empty-text">Aucun document n'a encore été ajouté.</div></div>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        docs.forEach(doc => {
+          // get public url (assumes bucket 'documents' is public)
+          const { publicUrl } = supabase.storage.from('documents').getPublicUrl(doc.filename || doc.filepath || doc.storage_path || '');
+          const card = document.createElement('div');
+          card.className = 'document-card';
+          card.innerHTML = `
+            <div class="document-header">
+              <div class="document-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              </div>
+              <div class="document-info">
+                <div class="document-title">${escapeHtml(doc.title || doc.filename || 'Sans titre')}</div>
+                <div class="document-meta">${timeAgo(doc.created_at)}</div>
+              </div>
+            </div>
+            <div class="document-footer">
+              <span class="document-type">${getFileType(doc.filename)}</span>
+              <div class="document-actions">
+                <button class="action-btn btn-download" title="Télécharger" data-url="${publicUrl}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </button>
+              </div>
+            </div>
+          `;
+          // card click opens document (unless click on action button)
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-download')) return;
+            if (publicUrl) window.open(publicUrl, '_blank');
+            else alert('URL du document introuvable.');
+          });
+
+          container.appendChild(card);
+        });
+
+        // attach download handlers
+        container.querySelectorAll('.btn-download').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const url = btn.getAttribute('data-url');
+            if (url) window.open(url, '_blank');
+            else alert('Lien non disponible');
+          });
+        });
+      } catch (err) {
+        console.error('loadDocuments unexpected', err);
+        container.innerHTML = '<p class="empty-text">Erreur lors du chargement des documents.</p>';
+      }
+    }
+
+    /***** Load quizzes and wire start action *****/
+    async function loadQuizzes() {
+      const container = document.getElementById('quiz-list');
+      container.innerHTML = '<p class="empty-text">Chargement des quiz…</p>';
+      try {
+        const { data: quizzes, error } = await supabase
+          .from('quizzes')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (error) {
+          console.error('loadQuizzes error', error);
+          container.innerHTML = '<p class="empty-text">Impossible de charger les quiz.</p>';
+          return;
+        }
+
+        if (!quizzes || quizzes.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-icon">❓</div><div class="empty-title">Aucun quiz</div><div class="empty-text">Aucun quiz n'est disponible pour le moment.</div></div>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        quizzes.forEach(q => {
+          const quizItem = document.createElement('div');
+          quizItem.className = 'quiz-item';
+          // parse questions count and estimated time if present
+          let questionsCount = 0;
+          try {
+            const qs = typeof q.questions === 'string' ? JSON.parse(q.questions) : q.questions;
+            questionsCount = Array.isArray(qs) ? qs.length : 0;
+          } catch (e) { questionsCount = 0; }
+
+          const estTime = Math.max(1, Math.round((questionsCount * 0.6))); // rough est 0.6 minute per question
+          quizItem.innerHTML = `
+            <div class="quiz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+            <div class="quiz-content">
+              <div class="quiz-title">${escapeHtml(q.title || 'Quiz')}</div>
+              <div class="quiz-description">${escapeHtml(q.description || '')}</div>
+              <div class="quiz-meta">
+                <span>${questionsCount} question${questionsCount>1?'s':''}</span>
+                <span>•</span>
+                <span>~${estTime} minutes</span>
+              </div>
+            </div>
+            <div class="quiz-status"><span class="status-badge pending"></span><span>À faire</span></div>
+          `;
+
+          quizItem.addEventListener('click', () => openQuizModal(q));
+          container.appendChild(quizItem);
+        });
+      } catch (err) {
+        console.error('loadQuizzes unexpected', err);
+        container.innerHTML = '<p class="empty-text">Erreur lors du chargement des quiz.</p>';
+      }
+    }
+
+    /***** Helpers *****/
+    function escapeHtml(unsafe) {
+      if (!unsafe && unsafe !== 0) return '';
+      return String(unsafe).replace(/[&<>"'`=\/]/g, function (s) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#x60;','/':'&#x2F;','=':'&#x3D;'})[s];
+      });
+    }
+    function getFileType(filename) {
+      if (!filename) return '';
+      const ext = filename.split('.').pop().toLowerCase();
+      if (['pdf'].includes(ext)) return 'PDF';
+      if (['doc','docx'].includes(ext)) return 'DOCX';
+      if (['xls','xlsx','csv'].includes(ext)) return 'XLSX';
+      return ext.toUpperCase();
+    }
+
+    /***** QUIZ MODAL LOGIC *****/
+    const modalBackdrop = document.getElementById('quiz-modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+    const prevBtn = document.getElementById('prev-q');
+    const nextBtn = document.getElementById('next-q');
+    const closeBtn = document.getElementById('close-modal');
+    const modalProgress = document.getElementById('modal-progress');
+
+    let currentQuiz = null;
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let answers = []; // [{questionIndex, selectedIndex}]
+    let currentUserId = null;
+
+    closeBtn.addEventListener('click', closeQuizModal);
+    prevBtn.addEventListener('click', showPrevQuestion);
+    nextBtn.addEventListener('click', showNextQuestion);
+
+    async function openQuizModal(quizRow) {
+      // parse questions (flexible: string or json)
+      try {
+        currentQuiz = quizRow;
+        const rawQs = quizRow.questions;
+        currentQuestions = typeof rawQs === 'string' ? JSON.parse(rawQs) : (rawQs || []);
+        if (!Array.isArray(currentQuestions) || currentQuestions.length === 0) {
+          alert('Ce quiz ne contient pas de questions.');
+          return;
+        }
+      } catch (e) {
+        console.error('Parsing quiz questions error', e);
+        alert('Erreur en chargeant le quiz.');
+        return;
+      }
+
+      // get user id
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!data.user) {
+          alert('Session invalide. Veuillez vous reconnecter.');
+          window.location.href = 'login.html';
+          return;
+        }
+        currentUserId = data.user.id;
+      } catch (e) {
+        console.error('auth', e);
+      }
+
+      // init
+      currentIndex = 0;
+      answers = new Array(currentQuestions.length).fill(null);
+      modalTitle.textContent = quizRow.title || 'Quiz';
+      renderQuestion();
+      modalBackdrop.style.display = 'flex';
+    }
+
+    function closeQuizModal() {
+      modalBackdrop.style.display = 'none';
+      modalBody.innerHTML = '';
+    }
+
+    function renderQuestion() {
+      const q = currentQuestions[currentIndex];
+      modalBody.innerHTML = `
+        <div class="modal-question">${currentIndex + 1}. ${escapeHtml(q.question || q.text || 'Question')}</div>
+        <div class="options" id="options-list"></div>
+      `;
+      modalProgress.textContent = `${currentIndex+1}/${currentQuestions.length}`;
+
+      const optsEl = document.getElementById('options-list');
+      const opts = q.options || q.choices || [];
+      opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn' + (answers[currentIndex] === i ? ' selected' : '');
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          answers[currentIndex] = i;
+          // mark selected
+          optsEl.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+        optsEl.appendChild(btn);
+      });
+
+      // update next/prev labels
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? 'Terminer' : 'Suivant';
+    }
+
+    function showPrevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    }
+
+    async function showNextQuestion() {
+      // enforce selection?
+      // allow skipping but warn
+      if (answers[currentIndex] === null) {
+        const ok = confirm('Vous n\'avez pas répondu à cette question. Continuer ?');
+        if (!ok) return;
+      }
+
+      if (currentIndex < currentQuestions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+        return;
+      }
+
+      // finalize quiz
+      await finalizeQuiz();
+      closeQuizModal();
+      // reload stats maybe
+      await loadStats();
+    }
+
+    async function finalizeQuiz() {
+      try {
+        // compute score: compare answers to correct indices
+        let score = 0;
+        currentQuestions.forEach((q, idx) => {
+          const correct = q.answer ?? q.correctIndex ?? null;
+          if (correct === null || correct === undefined) return;
+          if (answers[idx] === correct) score++;
+        });
+
+        // Persist result to quiz_results table if exists
+        const payload = {
+          quiz_id: currentQuiz.id,
+          user_id: currentUserId,
+          answers: JSON.stringify(answers),
+          score: score,
+          completed_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase.from('quiz_results').insert([payload]);
+        if (error) {
+          console.warn('Unable to save quiz result (maybe table missing):', error.message || error);
+        } else {
+          alert(`Quiz terminé — score: ${score}/${currentQuestions.length}`);
+        }
+      } catch (err) {
+        console.error('finalizeQuiz error', err);
+        alert('Erreur lors de l\'enregistrement du résultat.');
+      }
+    }
+
+    // Helper: view all buttons (jump to section)
+    document.getElementById('view-all-docs').addEventListener('click', (e) => {
+      e.preventDefault();
+      // focus to documents section
+      document.getElementById('document-grid').scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('view-all-quizzes').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('quiz-list').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Navigation item behavior (keeps design interactive)
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
       item.addEventListener('click', (e) => {
         e.preventDefault();
         navItems.forEach(nav => nav.classList.remove('active'));
         item.classList.add('active');
-        
-        // Ici vous pouvez ajouter la logique pour changer de page
         const page = item.dataset.page;
-        console.log('Navigation vers:', page);
+        // Simple behavior: scroll to section
+        if (page === 'dashboard') window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (page === 'documents') document.getElementById('document-grid').scrollIntoView({ behavior: 'smooth' });
+        if (page === 'quiz') document.getElementById('quiz-list').scrollIntoView({ behavior: 'smooth' });
       });
     });
 
-    // Actions sur les documents
-    const actionButtons = document.querySelectorAll('.action-btn');
-    actionButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        alert('Téléchargement du document...');
-      });
+    // Escape key closes modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeQuizModal();
     });
 
-    // Actions sur les quiz
-    const quizItems = document.querySelectorAll('.quiz-item');
-    quizItems.forEach(quiz => {
-      quiz.addEventListener('click', () => {
-        const title = quiz.querySelector('.quiz-title').textContent;
-        alert(`Ouverture du quiz: ${title}`);
-      });
-    });
-
-    // Actions sur les documents cards
-    const documentCards = document.querySelectorAll('.document-card');
-    documentCards.forEach(card => {
-      card.addEventListener('click', (e) => {
-        if (!e.target.closest('.action-btn')) {
-          const title = card.querySelector('.document-title').textContent;
-          alert(`Ouverture du document: ${title}`);
-        }
-      });
-    });
+    // Start
+    checkAuthAndLoad();
   </script>
 </body>
 </html>
