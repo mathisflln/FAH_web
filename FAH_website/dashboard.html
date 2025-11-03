@@ -345,76 +345,130 @@
     }
 
     /***** Load documents (recent first) *****/
-    async function loadDocuments() {
-      const container = document.getElementById('document-grid');
-      container.innerHTML = '<p class="empty-text">Chargement des documents…</p>';
-      try {
-        const { data: docs, error } = await supabase
-          .from('documents_meta')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(12);
+    /***** Load documents (recent first) - VERSION POUR BUCKET PRIVÉ *****/
+async function loadDocuments() {
+  const container = document.getElementById('document-grid');
+  container.innerHTML = '<p class="empty-text">Chargement des documents…</p>';
+  try {
+    const { data: docs, error } = await supabase
+      .from('documents_meta')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(12);
 
-        if (error) {
-          console.error('loadDocuments error', error);
-          container.innerHTML = '<p class="empty-text">Impossible de charger les documents.</p>';
-          return;
-        }
-
-        if (!docs || docs.length === 0) {
-          container.innerHTML = `<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-title">Aucun document</div><div class="empty-text">Aucun document n'a encore été ajouté.</div></div>`;
-          return;
-        }
-
-        container.innerHTML = '';
-        docs.forEach(doc => {
-          // get public url (assumes bucket 'documents' is public)
-          const { publicUrl } = supabase.storage.from('documents').getPublicUrl(doc.filename || doc.filepath || doc.storage_path || '');
-          const card = document.createElement('div');
-          card.className = 'document-card';
-          card.innerHTML = `
-            <div class="document-header">
-              <div class="document-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              </div>
-              <div class="document-info">
-                <div class="document-title">${escapeHtml(doc.title || doc.filename || 'Sans titre')}</div>
-                <div class="document-meta">${timeAgo(doc.created_at)}</div>
-              </div>
-            </div>
-            <div class="document-footer">
-              <span class="document-type">${getFileType(doc.filename)}</span>
-              <div class="document-actions">
-                <button class="action-btn btn-download" title="Télécharger" data-url="${publicUrl}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                </button>
-              </div>
-            </div>
-          `;
-          // card click opens document (unless click on action button)
-          card.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-download')) return;
-            if (publicUrl) window.open(publicUrl, '_blank');
-            else alert('URL du document introuvable.');
-          });
-
-          container.appendChild(card);
-        });
-
-        // attach download handlers
-        container.querySelectorAll('.btn-download').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const url = btn.getAttribute('data-url');
-            if (url) window.open(url, '_blank');
-            else alert('Lien non disponible');
-          });
-        });
-      } catch (err) {
-        console.error('loadDocuments unexpected', err);
-        container.innerHTML = '<p class="empty-text">Erreur lors du chargement des documents.</p>';
-      }
+    if (error) {
+      console.error('loadDocuments error', error);
+      container.innerHTML = '<p class="empty-text">Impossible de charger les documents.</p>';
+      return;
     }
+
+    if (!docs || docs.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-title">Aucun document</div><div class="empty-text">Aucun document n'a encore été ajouté.</div></div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    
+    // Traiter chaque document de manière asynchrone
+    for (const doc of docs) {
+      console.log('Document data:', doc); // Pour debug
+      
+      // Identifier le bon chemin du fichier
+      let filePath = doc.storage_path || doc.filepath || doc.filename || doc.file_path;
+      
+      if (!filePath) {
+        console.error('Aucun chemin trouvé pour le document:', doc);
+        continue; // Skip ce document
+      }
+
+      // Pour bucket PRIVÉ : créer une signed URL (valide 1 heure)
+      const { data: signedData, error: signError } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600); // 3600 secondes = 1 heure
+      
+      if (signError) {
+        console.error('Erreur création signed URL pour', filePath, ':', signError);
+        continue;
+      }
+      
+      const signedUrl = signedData?.signedUrl || '';
+      console.log('Signed URL:', signedUrl); // Pour debug
+
+      const card = document.createElement('div');
+      card.className = 'document-card';
+      card.innerHTML = `
+        <div class="document-header">
+          <div class="document-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          </div>
+          <div class="document-info">
+            <div class="document-title">${escapeHtml(doc.title || doc.filename || 'Sans titre')}</div>
+            <div class="document-meta">${timeAgo(doc.created_at)}</div>
+          </div>
+        </div>
+        <div class="document-footer">
+          <span class="document-type">${getFileType(filePath)}</span>
+          <div class="document-actions">
+            <button class="action-btn btn-download" title="Télécharger" data-filepath="${escapeHtml(filePath)}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // Card click ouvre le document
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-download')) return;
+        if (signedUrl) {
+          window.open(signedUrl, '_blank');
+        } else {
+          alert('URL du document introuvable. Chemin: ' + filePath);
+        }
+      });
+
+      container.appendChild(card);
+    }
+
+    // Attach download handlers (génère une nouvelle signed URL au moment du clic)
+    container.querySelectorAll('.btn-download').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const filePath = btn.getAttribute('data-filepath');
+        
+        if (!filePath) {
+          alert('Informations du document manquantes');
+          return;
+        }
+
+        try {
+          // Générer une nouvelle signed URL pour le téléchargement
+          const { data: downloadData, error: downloadError } = await supabase.storage
+            .from('documents')
+            .createSignedUrl(filePath, 60); // 60 secondes suffisent pour un téléchargement
+          
+          if (downloadError) {
+            console.error('Download error:', downloadError);
+            alert('Erreur lors de la génération du lien de téléchargement: ' + downloadError.message);
+            return;
+          }
+          
+          if (downloadData?.signedUrl) {
+            // Ouvrir dans un nouvel onglet pour télécharger
+            window.open(downloadData.signedUrl, '_blank');
+          } else {
+            alert('Impossible de générer le lien de téléchargement');
+          }
+        } catch (err) {
+          console.error('Unexpected download error:', err);
+          alert('Erreur lors du téléchargement du document');
+        }
+      });
+    });
+  } catch (err) {
+    console.error('loadDocuments unexpected', err);
+    container.innerHTML = '<p class="empty-text">Erreur lors du chargement des documents.</p>';
+  }
+}
 
     /***** Load quizzes and wire start action *****/
     async function loadQuizzes() {
