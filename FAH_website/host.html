@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Quiz</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+body { font-family:sans-serif; padding:20px; background:#f8f9fa; }
+button { padding:10px 14px; border-radius:6px; border:none; cursor:pointer; margin:5px; }
+.option-btn { padding:10px; margin:5px; border-radius:6px; cursor:pointer; border:1px solid #ccc; display:block; width:100%; text-align:left; }
+</style>
+</head>
+<body>
+
+<h1>Rejoindre un quiz</h1>
+<div>
+  <input type="text" id="nickname" placeholder="Pseudo">
+  <input type="text" id="code" placeholder="Code session">
+  <button id="join-btn">Rejoindre</button>
+</div>
+
+<div id="question-area" style="display:none;">
+  <h3 id="question-text"></h3>
+  <div id="options-container"></div>
+  <div id="timer"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ckfdysasgawyixbxjyfz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZmR5c2FzZ2F3eWl4YnhqeWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5ODg1NjcsImV4cCI6MjA3NzU2NDU2N30.t0ubaRk5sz7kewyEsOg4CpFvj47S9U1J1SP_3DQBmE8";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let sessionId = null;
+let participantId = null;
+
+// --- REJOINDRE SESSION ---
+document.getElementById('join-btn').addEventListener('click', async () => {
+  const nickname = document.getElementById('nickname').value.trim();
+  const code = document.getElementById('code').value.trim();
+  if(!nickname||!code){ alert("Remplissez pseudo + code"); return; }
+  const { data: session, error } = await supabase.from('live_sessions').select('*').eq('code', code).single();
+  if(error){ alert("Code invalide"); return; }
+  sessionId = session.id;
+  // insert participant
+  const { data, error: insErr } = await supabase.from('session_participants').insert([{ session_id: sessionId, nickname, score:0 }]).select().single();
+  if(insErr){ alert(insErr.message); return; }
+  participantId = data.id;
+  alert("Rejoint ! Attendez le début du quiz");
+  listenQuestions();
+});
+
+// --- ECOUTER QUESTIONS ---
+function listenQuestions(){
+  supabase.from(`live_sessions:id=eq.${sessionId}`)
+    .on('UPDATE', payload => {
+      const qIndex = payload.new.current_question_index;
+      const questions = payload.new.questions;
+      if(qIndex!==undefined && questions) showQuestion(questions[qIndex]);
+    }).subscribe();
+}
+
+function showQuestion(q){
+  document.getElementById('question-area').style.display = 'block';
+  document.getElementById('question-text').textContent = q.question;
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement('div');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.addEventListener('click', async ()=>{
+      // envoyer réponse
+      await supabase.from('quiz_results').insert([{ quiz_id:q.quiz_id, participant_id, question_index:q.index, answer_index:i }]);
+      container.querySelectorAll('.option-btn').forEach(b=>b.style.opacity=0.5);
+      btn.style.opacity = 1;
+    });
+    container.appendChild(btn);
+  });
+}
+</script>
+
+</body>
+</html>
 
