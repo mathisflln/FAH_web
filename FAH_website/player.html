@@ -88,9 +88,8 @@
       color: #667eea; 
       margin-bottom: 20px; 
     }
-    .timer-display.warning { color: #e74c3c; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .options-grid { display: grid; gap: 15px; margin-bottom: 20px; }
+    .timer-display.warning { color: #e74c3c; }
+    .options-grid { display: grid; gap: 15px; }
     .option-btn { 
       padding: 20px; 
       border: none; 
@@ -112,19 +111,15 @@
     .option-b { background: #3498db; }
     .option-c { background: #f39c12; }
     .option-d { background: #2ecc71; }
-    .waiting-answer { 
+    .result-message { 
       text-align: center; 
       padding: 30px; 
-      font-size: 1.2rem; 
-      color: #666;
-      background: #f8f9fa;
-      border-radius: 15px;
-      margin-top: 20px;
+      font-size: 1.3rem; 
+      font-weight: 600; 
     }
-    .waiting-answer-icon {
-      font-size: 3rem;
-      margin-bottom: 15px;
-    }
+    .result-correct { color: #2ecc71; }
+    .result-wrong { color: #e74c3c; }
+    .result-icon { font-size: 3rem; margin-bottom: 10px; }
     .score-display { 
       text-align: center; 
       margin: 20px 0; 
@@ -188,10 +183,7 @@
           <div class="score-value" id="score">0</div>
         </div>
         <div class="options-grid" id="options-grid"></div>
-        <div id="waiting-answer" class="waiting-answer" style="display:none;">
-          <div class="waiting-answer-icon">⏳</div>
-          <div>Réponse enregistrée !<br>En attente des autres participants...</div>
-        </div>
+        <div id="result-message" class="result-message" style="display:none;"></div>
       </div>
 
       <!-- FINAL SCREEN -->
@@ -217,9 +209,8 @@
     let currentQuestion = null;
     let questionStartTime = null;
     let hasAnswered = false;
-    let timerInterval = null;
-    let scoreSubscription = null;
 
+    // Pre-fill code from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const codeParam = urlParams.get('code');
     if (codeParam) {
@@ -242,6 +233,7 @@
       }
 
       try {
+        // Find session by code
         const { data: session, error: sessionError } = await supabase
           .from('live_sessions')
           .select('*')
@@ -260,6 +252,7 @@
 
         sessionId = session.id;
 
+        // Check if nickname is already taken in this session
         const { data: existingParticipants } = await supabase
           .from('session_participants')
           .select('nickname')
@@ -271,6 +264,7 @@
           return;
         }
 
+        // Join session
         const { data: participant, error: joinError } = await supabase
           .from('session_participants')
           .insert([{
@@ -286,11 +280,12 @@
         participantId = participant.id;
         document.getElementById('player-name').textContent = nickname;
 
+        // Switch to waiting screen
         document.getElementById('join-screen').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'block';
 
+        // Subscribe to session updates
         subscribeToSession();
-        subscribeToScore();
 
       } catch (err) {
         console.error('Join error:', err);
@@ -327,29 +322,10 @@
         .subscribe();
     }
 
-    function subscribeToScore() {
-      if (scoreSubscription) {
-        scoreSubscription.unsubscribe();
-      }
-
-      scoreSubscription = supabase
-        .channel('score-updates')
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'session_participants',
-          filter: `id=eq.${participantId}`
-        }, (payload) => {
-          currentScore = payload.new.score;
-          document.getElementById('score').textContent = currentScore;
-        })
-        .subscribe();
-    }
-
     async function loadQuestion(session) {
       hasAnswered = false;
-      clearInterval(timerInterval);
       
+      // Get quiz data
       const { data: quiz } = await supabase
         .from('quizzes')
         .select('questions')
@@ -358,17 +334,18 @@
 
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-      currentQuestion.index = session.current_question_index;
 
-      // Utiliser le timestamp du serveur pour synchroniser le timer
       questionStartTime = new Date(session.question_start_time).getTime();
 
+      // Switch to game screen
       document.getElementById('waiting-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'block';
-      document.getElementById('waiting-answer').style.display = 'none';
+      document.getElementById('result-message').style.display = 'none';
 
+      // Display question
       document.getElementById('question-text').textContent = currentQuestion.question;
 
+      // Display options
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
       
@@ -381,21 +358,17 @@
         optionsGrid.appendChild(btn);
       });
 
-      // Calculer le temps restant basé sur le serveur
-      const timeLimit = currentQuestion.timeLimit || 30;
-      const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
-      const timeLeft = Math.max(0, timeLimit - elapsed);
-
-      startTimerSynced(timeLeft);
+      // Start timer
+      startTimer(currentQuestion.timeLimit || 30);
     }
 
-    function startTimerSynced(initialTime) {
-      let timeLeft = initialTime;
+    function startTimer(seconds) {
+      let timeLeft = seconds;
       const timerEl = document.getElementById('timer');
       timerEl.textContent = `⏱️ ${timeLeft}s`;
       timerEl.classList.remove('warning');
 
-      timerInterval = setInterval(() => {
+      const interval = setInterval(() => {
         timeLeft--;
         timerEl.textContent = `⏱️ ${timeLeft}s`;
 
@@ -404,10 +377,10 @@
         }
 
         if (timeLeft <= 0) {
-          clearInterval(timerInterval);
+          clearInterval(interval);
           if (!hasAnswered) {
             disableOptions();
-            showWaitingMessage();
+            showResultMessage(false);
           }
         }
       }, 1000);
@@ -418,7 +391,9 @@
       hasAnswered = true;
 
       const responseTime = Date.now() - questionStartTime;
+      const isCorrect = answerIndex === currentQuestion.correctIndex;
 
+      // Visual feedback
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
         if (i === answerIndex) {
@@ -427,33 +402,28 @@
         btn.disabled = true;
       });
 
+      // Submit answer
       try {
-        // Vérifier si une réponse n'a pas déjà été enregistrée
-        const { data: existingAnswer } = await supabase
-          .from('participant_answers')
-          .select('id')
-          .eq('session_id', sessionId)
-          .eq('participant_id', participantId)
-          .eq('question_index', currentQuestion.index)
-          .maybeSingle();
-
-        if (existingAnswer) {
-          console.log('Réponse déjà enregistrée');
-          showWaitingMessage();
-          return;
-        }
-
         await supabase
           .from('participant_answers')
           .insert([{
             session_id: sessionId,
             participant_id: participantId,
-            question_index: currentQuestion.index,
+            question_index: currentQuestion.index || 0,
             answer_index: answerIndex,
             response_time: responseTime
           }]);
 
-        showWaitingMessage();
+        // Show result
+        showResultMessage(isCorrect);
+        
+        // Update local score (will be confirmed by server)
+        if (isCorrect) {
+          const maxTime = (currentQuestion.timeLimit || 30) * 1000;
+          const timeBonus = Math.max(0, Math.round((1 - (responseTime / maxTime)) * 500));
+          currentScore += 1000 + timeBonus;
+          document.getElementById('score').textContent = currentScore;
+        }
 
       } catch (err) {
         console.error('Error submitting answer:', err);
@@ -466,13 +436,18 @@
       });
     }
 
-    function showWaitingMessage() {
-      document.getElementById('waiting-answer').style.display = 'block';
+    function showResultMessage(isCorrect) {
+      const resultEl = document.getElementById('result-message');
+      if (isCorrect) {
+        resultEl.innerHTML = '<div class="result-icon">✓</div><div class="result-correct">Bonne réponse !</div>';
+      } else {
+        resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
+      }
+      resultEl.style.display = 'block';
     }
 
     async function showFinalScreen() {
-      clearInterval(timerInterval);
-
+      // Get final score and rank
       const { data: participant } = await supabase
         .from('session_participants')
         .select('score')
