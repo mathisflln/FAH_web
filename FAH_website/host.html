@@ -276,8 +276,7 @@
       await supabase
         .from('live_sessions')
         .update({ 
-          current_question_index: index,
-          question_start_time: new Date().toISOString()
+          current_question_index: index
         })
         .eq('id', sessionId);
 
