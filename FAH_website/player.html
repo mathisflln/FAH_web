@@ -334,20 +334,22 @@
         .select('questions')
         .eq('id', session.quiz_id)
         .single();
-
+    
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-
+    
       questionStartTime = new Date(session.question_start_time).getTime();
-
+    
       // Switch to game screen
       document.getElementById('waiting-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'block';
+    
+      // **Cacher le résultat précédent**
       document.getElementById('result-message').style.display = 'none';
-
+    
       // Display question
       document.getElementById('question-text').textContent = currentQuestion.question;
-
+    
       // Display options
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
@@ -360,10 +362,11 @@
         btn.addEventListener('click', () => selectAnswer(i));
         optionsGrid.appendChild(btn);
       });
-
+    
       // Start timer
       startTimer(currentQuestion.timeLimit || 30);
     }
+
 
     function startTimer(seconds) {
       let timeLeft = seconds;
@@ -428,16 +431,19 @@
     async function selectAnswer(answerIndex) {
       if (hasAnswered) return;
       hasAnswered = true;
-
+    
       const responseTime = Date.now() - questionStartTime;
-
+    
       // Visual feedback
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
         if (i === answerIndex) btn.classList.add('selected');
         btn.disabled = true;
       });
-
+    
+      // Affiche le message "en attente des autres réponses"
+      showResultMessage();
+    
       // Submit answer
       try {
         await supabase
