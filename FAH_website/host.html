@@ -189,22 +189,6 @@
           return;
         }
 
-        // EXPIRATION : Vérifier que la session a moins d'1 heure
-        const sessionCreated = new Date(session.created_at);
-        const now = new Date();
-        const hourInMs = 60 * 60 * 1000;
-        if (now - sessionCreated > hourInMs) {
-          showError('Cette session a expiré (durée maximale : 1 heure)');
-          await supabase.from('live_sessions').delete().eq('id', sessionId);
-          return;
-        }
-
-        const quiz = session.quizzes;
-        quizData = {
-          ...quiz,
-          questions: typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions
-        };
-
         // Ajouter l'index aux questions
         quizData.questions = quizData.questions.map((q, i) => ({ ...q, index: i }));
 
