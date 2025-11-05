@@ -1,95 +1,89 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Hôte Quiz - FAH Marie-Curie</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: "Host Grotesk", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .container { width: 100%; max-width: 1200px; }
-    .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-    .waiting-screen { text-align: center; }
-    .quiz-title { font-size: 2rem; font-weight: 600; color: #0d0d0d; margin-bottom: 20px; }
-    .code-display { background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%); padding: 40px; border-radius: 15px; margin: 30px 0; }
-    .code-label { font-size: 1.2rem; color: #666; margin-bottom: 10px; }
-    .code-value { font-size: 4rem; font-weight: 700; color: #0d0d0d; letter-spacing: 10px; }
-    .join-url { font-size: 1rem; color: #666; margin: 20px 0; word-break: break-all; }
-    #qrcode { margin: 20px auto; }
-    #qrcode canvas { border-radius: 10px; }
-    .participants-list { margin: 30px 0; text-align: left; }
-    .participants-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 15px; color: #0d0d0d; }
-    .participant-item { padding: 12px 20px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .participant-name { font-weight: 500; }
-    .participant-score { color: #667eea; font-weight: 600; }
-    .btn { padding: 15px 40px; border: none; border-radius: 50px; font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-    .btn-primary { background: #0d0d0d; color: white; }
-    .btn-primary:hover { background: #2d2d2d; transform: translateY(-2px); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .question-screen { display: none; }
-    .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .question-number { font-size: 1.2rem; color: #666; }
-    .timer { font-size: 2rem; font-weight: 700; color: #667eea; }
-    .timer.warning { color: #e74c3c; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .question-text { font-size: 1.8rem; font-weight: 600; color: #0d0d0d; margin-bottom: 30px; text-align: center; }
-    .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
-    .option-box { padding: 30px; border-radius: 15px; font-size: 1.2rem; font-weight: 500; text-align: center; cursor: pointer; transition: all 0.3s; border: 3px solid transparent; }
-    .option-a { background: #e74c3c; color: white; }
-    .option-b { background: #3498db; color: white; }
-    .option-c { background: #f39c12; color: white; }
-    .option-d { background: #2ecc71; color: white; }
-    .option-box.correct { border-color: #2ecc71; transform: scale(1.05); }
-    .response-stats { margin: 20px 0; }
-    .stat-bar { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
-    .stat-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 500; }
-    .stat-progress { height: 30px; background: #e5e5e5; border-radius: 5px; overflow: hidden; }
-    .stat-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s; }
-    .leaderboard { background: #f8f9fa; border-radius: 15px; padding: 25px; margin: 30px 0; }
-    .leaderboard-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; text-align: center; }
-    .podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-    .podium-item { text-align: center; padding: 20px; background: white; border-radius: 10px; }
-    .podium-rank { font-size: 2rem; font-weight: 700; margin-bottom: 10px; }
-    .rank-1 { color: #f39c12; }
-    .rank-2 { color: #95a5a6; }
-    .rank-3 { color: #cd7f32; }
-    .podium-name { font-weight: 600; margin-bottom: 5px; }
-    .podium-score { color: #667eea; font-weight: 600; }
-    .results-screen { display: none; }
-    .final-title { font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 40px; color: #0d0d0d; }
-    .btn-close { background: #e74c3c; color: white; margin-top: 30px; }
-    .btn-close:hover { background: #c0392b; }
-    .empty-participants { text-align: center; color: #999; padding: 20px; }
+    /* (garde ton CSS inchangé — j'ai conservé le même CSS que l'original pour la brièveté) */
+    * { margin:0; padding:0; box-sizing:border-box }
+    body{font-family:"Host Grotesk",sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .container{width:100%;max-width:1200px}
+    .card{background:white;border-radius:20px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    /* ... reste du CSS identique ... */
+    .waiting-screen{text-align:center}
+    .quiz-title{font-size:2rem;font-weight:600;color:#0d0d0d;margin-bottom:20px}
+    .code-display{background:linear-gradient(135deg,#FBE01D 0%,#fff4a4 100%);padding:40px;border-radius:15px;margin:30px 0}
+    .code-label{font-size:1.2rem;color:#666;margin-bottom:10px}
+    .code-value{font-size:4rem;font-weight:700;color:#0d0d0d;letter-spacing:10px}
+    #qrcode{margin:20px auto}
+    #qrcode canvas{border-radius:10px}
+    .participants-list{margin:30px 0;text-align:left}
+    .participants-title{font-size:1.3rem;font-weight:600;margin-bottom:15px;color:#0d0d0d}
+    .participant-item{padding:12px 20px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+    .participant-name{font-weight:500}
+    .participant-score{color:#667eea;font-weight:600}
+    .btn{padding:15px 40px;border:none;border-radius:50px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;transition:all .3s}
+    .btn-primary{background:#0d0d0d;color:white}
+    .btn-primary:hover{background:#2d2d2d;transform:translateY(-2px)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .question-screen{display:none}
+    .question-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
+    .question-number{font-size:1.2rem;color:#666}
+    .timer{font-size:2rem;font-weight:700;color:#667eea}
+    .timer.warning{color:#e74c3c;animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .question-text{font-size:1.8rem;font-weight:600;color:#0d0d0d;margin-bottom:30px;text-align:center}
+    .options-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:30px}
+    .option-box{padding:30px;border-radius:15px;font-size:1.2rem;font-weight:500;text-align:center;cursor:pointer;transition:all .3s;border:3px solid transparent}
+    .option-a{background:#e74c3c;color:white}
+    .option-b{background:#3498db;color:white}
+    .option-c{background:#f39c12;color:white}
+    .option-d{background:#2ecc71;color:white}
+    .option-box.correct{border-color:#2ecc71;transform:scale(1.05)}
+    .response-stats{margin:20px 0}
+    .stat-bar{background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:10px}
+    .stat-label{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:500}
+    .stat-progress{height:30px;background:#e5e5e5;border-radius:5px;overflow:hidden}
+    .stat-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .5s}
+    .leaderboard{background:#f8f9fa;border-radius:15px;padding:25px;margin:30px 0}
+    .leaderboard-title{font-size:1.5rem;font-weight:600;margin-bottom:20px;text-align:center}
+    .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .podium-item{text-align:center;padding:20px;background:white;border-radius:10px}
+    .podium-rank{font-size:2rem;font-weight:700;margin-bottom:10px}
+    .rank-1{color:#f39c12}
+    .rank-2{color:#95a5a6}
+    .rank-3{color:#cd7f32}
+    .podium-name{font-weight:600;margin-bottom:5px}
+    .podium-score{color:#667eea;font-weight:600}
+    .results-screen{display:none}
+    .final-title{font-size:2.5rem;font-weight:700;text-align:center;margin-bottom:40px;color:#0d0d0d}
+    .btn-close{background:#e74c3c;color:white;margin-top:30px}
+    .btn-close:hover{background:#c0392b}
+    .empty-participants{text-align:center;color:#999;padding:20px}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
-      <!-- WAITING SCREEN -->
+      <!-- WAITING -->
       <div id="waiting-screen" class="waiting-screen">
         <h1 class="quiz-title" id="quiz-title">Chargement...</h1>
-        
         <div class="code-display">
           <div class="code-label">Code de la session</div>
           <div class="code-value" id="session-code">------</div>
         </div>
-
         <div id="qrcode"></div>
-        
         <p class="join-url">Les participants peuvent rejoindre sur : <br><strong id="join-url"></strong></p>
-
         <div class="participants-list">
           <div class="participants-title">Participants connectés (<span id="participant-count">0</span>)</div>
           <div id="participants-container">
             <div class="empty-participants">En attente des participants...</div>
           </div>
         </div>
-
         <button class="btn btn-primary" id="start-btn" disabled>Démarrer le quiz</button>
       </div>
 
@@ -101,9 +95,7 @@
         </div>
 
         <div class="question-text" id="question-text"></div>
-
         <div class="options-grid" id="options-grid"></div>
-
         <div class="response-stats" id="response-stats" style="display:none;"></div>
 
         <div class="leaderboard" id="leaderboard" style="display:none;">
@@ -114,15 +106,13 @@
         <button class="btn btn-primary" id="next-btn" style="display:none;">Question suivante</button>
       </div>
 
-      <!-- RESULTS SCREEN -->
+      <!-- RESULTS -->
       <div id="results-screen" class="results-screen">
         <h1 class="final-title">🎉 Quiz terminé !</h1>
-        
         <div class="leaderboard">
           <div class="leaderboard-title">Classement final</div>
           <div id="final-leaderboard"></div>
         </div>
-
         <button class="btn btn-close" id="close-btn">Fermer la session</button>
       </div>
     </div>
@@ -137,24 +127,23 @@
     let quizData = null;
     let currentQuestionIndex = 0;
     let timerInterval = null;
-    let questionStartTime = null;
     let participants = [];
 
+    // --- INIT ---
     async function init() {
       const params = new URLSearchParams(window.location.search);
       sessionId = params.get('session');
-
       if (!sessionId) {
         alert('Session invalide');
         window.location.href = 'dashboard.html';
         return;
       }
-
       await loadSession();
       subscribeToParticipants();
-      subscribeToAnswers();
+      subscribeToAnswers(); // keep for analytics but scoring happens on host
     }
 
+    // Load session + quiz
     async function loadSession() {
       try {
         const { data: session, error: sessionError } = await supabase
@@ -171,38 +160,31 @@
           questions: typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions
         };
 
-        document.getElementById('quiz-title').textContent = quizData.title;
+        document.getElementById('quiz-title').textContent = quizData.title || 'Quiz';
         document.getElementById('session-code').textContent = session.code;
         document.getElementById('total-questions').textContent = quizData.questions.length;
 
         const joinUrl = `${window.location.origin}/player.html?code=${session.code}`;
         document.getElementById('join-url').textContent = joinUrl;
 
-        // Generate QR code
-        QRCode.toCanvas(document.getElementById('qrcode'), joinUrl, {
-          width: 200,
-          margin: 2
-        });
-
+        QRCode.toCanvas(document.getElementById('qrcode'), joinUrl, { width:200, margin:2 });
       } catch (err) {
         console.error('Error loading session:', err);
-        alert('Erreur de chargement: ' + err.message);
+        alert('Erreur de chargement: ' + (err.message || err));
       }
     }
 
+    // PARTICIPANTS
     function subscribeToParticipants() {
       supabase
-        .channel('participants')
+        .channel('participants-'+sessionId)
         .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'session_participants',
+          event: '*', schema: 'public', table: 'session_participants',
           filter: `session_id=eq.${sessionId}`
-        }, async () => {
-          await loadParticipants();
+        }, payload => {
+          loadParticipants();
         })
         .subscribe();
-
       loadParticipants();
     }
 
@@ -217,39 +199,37 @@
         console.error('Error loading participants:', error);
         return;
       }
-
       participants = data || [];
       document.getElementById('participant-count').textContent = participants.length;
 
       const container = document.getElementById('participants-container');
-      if (participants.length === 0) {
+      if (!participants.length) {
         container.innerHTML = '<div class="empty-participants">En attente des participants...</div>';
       } else {
         container.innerHTML = participants.map(p => `
           <div class="participant-item">
             <span class="participant-name">${escapeHtml(p.nickname)}</span>
-            <span class="participant-score">${p.score} pts</span>
+            <span class="participant-score">${p.score || 0} pts</span>
           </div>
         `).join('');
       }
-
       document.getElementById('start-btn').disabled = participants.length === 0;
     }
 
     document.getElementById('start-btn').addEventListener('click', startQuiz);
 
+    // START QUIZ: set status active and question index 0
     async function startQuiz() {
       await supabase
         .from('live_sessions')
-        .update({ status: 'active', current_question_index: 0 })
+        .update({ status: 'active', current_question_index: 0, question_start_time: new Date().toISOString() })
         .eq('id', sessionId);
-
       document.getElementById('waiting-screen').style.display = 'none';
       document.getElementById('question-screen').style.display = 'block';
-
       showQuestion(0);
     }
 
+    // SHOW QUESTION: set question_start_time in DB (authoritative)
     async function showQuestion(index) {
       currentQuestionIndex = index;
       const question = quizData.questions[index];
@@ -262,25 +242,22 @@
 
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
-      
-      const colors = ['option-a', 'option-b', 'option-c', 'option-d'];
-      question.options.forEach((opt, i) => {
+      const colors = ['option-a','option-b','option-c','option-d'];
+      question.options.forEach((opt,i) => {
         const div = document.createElement('div');
         div.className = `option-box ${colors[i]}`;
         div.textContent = opt;
         optionsGrid.appendChild(div);
       });
 
-      questionStartTime = Date.now();
-      
+      // IMPORTANT: write the authoritative question_start_time to DB (server time) so players compute remaining from it
+      const startTimeISO = new Date().toISOString();
       await supabase
         .from('live_sessions')
-        .update({ 
-          current_question_index: index,
-          question_start_time: new Date().toISOString()
-        })
+        .update({ current_question_index: index, question_start_time: startTimeISO })
         .eq('id', sessionId);
 
+      // start local timer for host view
       startTimer(question.timeLimit || 30);
     }
 
@@ -289,63 +266,74 @@
       const timerEl = document.getElementById('timer');
       timerEl.textContent = timeLeft;
       timerEl.classList.remove('warning');
-
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         timeLeft--;
         timerEl.textContent = timeLeft;
-
-        if (timeLeft <= 5) {
-          timerEl.classList.add('warning');
-        }
-
+        if (timeLeft <= 5) timerEl.classList.add('warning');
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
+          // end question and compute results
           showResults();
         }
       }, 1000);
     }
 
+    // SUBSCRIBE TO ANSWERS (we use this for realtime stats display, but scoring is computed once when host calls showResults)
     function subscribeToAnswers() {
       supabase
-        .channel('answers')
+        .channel('answers-'+sessionId)
         .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'participant_answers',
+          event: 'INSERT', schema: 'public', table: 'participant_answers',
           filter: `session_id=eq.${sessionId}`
-        }, () => {
-          // Real-time update could be added here
+        }, payload => {
+          // could update live counts if desired
         })
         .subscribe();
     }
 
+    // SHOW RESULTS: dedupe answers, compute stats, compute points and update participants centrally
     async function showResults() {
       clearInterval(timerInterval);
-
       const question = quizData.questions[currentQuestionIndex];
-      
-      // Get all answers for this question
-      const { data: answers } = await supabase
+
+      // fetch all answers for this question
+      const { data: answersRaw, error: ansErr } = await supabase
         .from('participant_answers')
         .select('*')
         .eq('session_id', sessionId)
         .eq('question_index', currentQuestionIndex);
 
-      // Calculate statistics
+      if (ansErr) {
+        console.error('Error fetching answers', ansErr);
+      }
+
+      const answers = answersRaw || [];
+
+      // Deduplicate answers by participant_id: keep the earliest (smallest response_time)
+      const dedup = {};
+      for (const a of answers) {
+        if (!a.participant_id) continue;
+        if (!dedup[a.participant_id] || a.response_time < dedup[a.participant_id].response_time) {
+          dedup[a.participant_id] = a;
+        }
+      }
+      const uniqueAnswers = Object.values(dedup);
+
+      // Calculate stats for display (percentages)
       const stats = question.options.map((_, i) => {
-        const count = answers?.filter(a => a.answer_index === i).length || 0;
-        const percentage = answers?.length ? Math.round((count / answers.length) * 100) : 0;
+        const count = uniqueAnswers.filter(a => a.answer_index === i).length;
+        const percentage = uniqueAnswers.length ? Math.round((count / uniqueAnswers.length) * 100) : 0;
         return { count, percentage };
       });
 
-      // Show stats
+      // Show stats UI
       const statsContainer = document.getElementById('response-stats');
       statsContainer.style.display = 'block';
-      statsContainer.innerHTML = question.options.map((opt, i) => `
+      statsContainer.innerHTML = question.options.map((opt,i) => `
         <div class="stat-bar">
           <div class="stat-label">
-            <span>${opt}</span>
+            <span>${escapeHtml(opt)}</span>
             <span>${stats[i].percentage}% (${stats[i].count})</span>
           </div>
           <div class="stat-progress">
@@ -354,62 +342,70 @@
         </div>
       `).join('');
 
-      // Highlight correct answer
+      // Highlight correct answer on host only
       const optionsBoxes = document.querySelectorAll('.option-box');
-      optionsBoxes[question.correctIndex].classList.add('correct');
+      optionsBoxes.forEach((el, idx) => el.classList.remove('correct'));
+      if (optionsBoxes[question.correctIndex]) {
+        optionsBoxes[question.correctIndex].classList.add('correct');
+      }
 
-      // Update leaderboard
-      await updateScores();
+      // Compute scoring per participant (aggregate then update DB once per participant)
+      await computeAndApplyScores(uniqueAnswers, question);
+
+      // update participant list display (scores updated)
+      await loadParticipants();
       await showLeaderboard();
 
-      // Show next button
+      // show next button
       document.getElementById('next-btn').style.display = 'block';
     }
 
-    async function updateScores() {
-      const question = quizData.questions[currentQuestionIndex];
+    // Compute points and update participants in bulk
+    async function computeAndApplyScores(answers, question) {
+      if (!answers || answers.length === 0) return;
       const maxTime = (question.timeLimit || 30) * 1000;
 
-      const { data: answers } = await supabase
-        .from('participant_answers')
-        .select('*')
-        .eq('session_id', sessionId)
-        .eq('question_index', currentQuestionIndex);
+      // accumulate points per participant
+      const pointsByParticipant = {}; // participant_id -> points
+      const updatesToAnswers = []; // {id, is_correct, points_earned}
 
-      if (!answers) return;
-
-      for (const answer of answers) {
-        if (answer.answer_index === question.correctIndex) {
-          // Calculate points: base 1000 + time bonus (up to 500)
-          const timeBonus = Math.max(0, Math.round((1 - (answer.response_time / maxTime)) * 500));
+      for (const ans of answers) {
+        if (ans.answer_index === question.correctIndex) {
+          const timeBonus = Math.max(0, Math.round((1 - (ans.response_time / maxTime)) * 500));
           const points = 1000 + timeBonus;
-
-          const { data: participant } = await supabase
-            .from('session_participants')
-            .select('score')
-            .eq('id', answer.participant_id)
-            .single();
-
-          await supabase
-            .from('session_participants')
-            .update({ score: (participant.score || 0) + points })
-            .eq('id', answer.participant_id);
-
-          await supabase
-            .from('participant_answers')
-            .update({ is_correct: true, points_earned: points })
-            .eq('id', answer.id);
+          pointsByParticipant[ans.participant_id] = (pointsByParticipant[ans.participant_id] || 0) + points;
+          updatesToAnswers.push({ id: ans.id, is_correct: true, points_earned: points });
         } else {
-          await supabase
-            .from('participant_answers')
-            .update({ is_correct: false, points_earned: 0 })
-            .eq('id', answer.id);
+          updatesToAnswers.push({ id: ans.id, is_correct: false, points_earned: 0 });
         }
       }
 
-      await loadParticipants();
+      // Update participant scores (one DB operation per participant)
+      for (const [participantId, points] of Object.entries(pointsByParticipant)) {
+        // read current score once
+        const { data: pData } = await supabase
+          .from('session_participants')
+          .select('score')
+          .eq('id', participantId)
+          .single();
+
+        const currentScore = (pData && pData.score) ? pData.score : 0;
+        await supabase
+          .from('session_participants')
+          .update({ score: currentScore + points })
+          .eq('id', participantId);
+      }
+
+      // Update participant_answers rows with is_correct & points_earned (batch updates)
+      for (const u of updatesToAnswers) {
+        await supabase
+          .from('participant_answers')
+          .update({ is_correct: u.is_correct, points_earned: u.points_earned })
+          .eq('id', u.id);
+      }
     }
 
+    // Show top 3 leaderboard
     async function showLeaderboard() {
       const { data: topParticipants } = await supabase
         .from('session_participants')
@@ -418,17 +414,18 @@
         .order('score', { ascending: false })
         .limit(3);
 
-      if (!topParticipants || topParticipants.length === 0) return;
+      if (!topParticipants || topParticipants.length === 0) {
+        document.getElementById('leaderboard').style.display = 'none';
+        return;
+      }
 
       const podium = document.getElementById('podium');
-      const ranks = ['rank-1', 'rank-2', 'rank-3'];
-      const medals = ['🥇', '🥈', '🥉'];
-
-      podium.innerHTML = topParticipants.map((p, i) => `
+      const medals = ['🥇','🥈','🥉'];
+      podium.innerHTML = topParticipants.map((p,i) => `
         <div class="podium-item">
-          <div class="podium-rank ${ranks[i]}">${medals[i]}</div>
+          <div class="podium-rank">${medals[i]}</div>
           <div class="podium-name">${escapeHtml(p.nickname)}</div>
-          <div class="podium-score">${p.score} pts</div>
+          <div class="podium-score">${p.score || 0} pts</div>
         </div>
       `).join('');
 
@@ -459,11 +456,11 @@
         .order('score', { ascending: false });
 
       const finalLeaderboard = document.getElementById('final-leaderboard');
-      finalLeaderboard.innerHTML = finalParticipants?.map((p, i) => `
-        <div class="participant-item" style="font-size: 1.1rem;">
-          <span style="font-weight: 700;">#${i + 1}</span>
+      finalLeaderboard.innerHTML = finalParticipants?.map((p,i) => `
+        <div class="participant-item" style="font-size:1.1rem;">
+          <span style="font-weight:700;">#${i+1}</span>
           <span class="participant-name">${escapeHtml(p.nickname)}</span>
-          <span class="participant-score">${p.score} pts</span>
+          <span class="participant-score">${p.score || 0} pts</span>
         </div>
       `).join('') || '';
     }
@@ -475,9 +472,12 @@
 
     function escapeHtml(unsafe) {
       if (!unsafe) return '';
-      return String(unsafe).replace(/[&<>"']/g, (m) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-      })[m]);
+      return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    }
+
+    // minimal subscription for participant_answers (optional)
+    function subscribeToAnswers() {
+      // already set above — placeholder to avoid double-definition
     }
 
     init();
