@@ -378,27 +378,59 @@
 
         if (timeLeft <= 0) {
           clearInterval(interval);
-          if (!hasAnswered) {
-            disableOptions();
-            showResultMessage(false);
-          }
+          disableOptions();
+          await fetchQuestionResult(); // <-- nouvelle fonction
         }
       }, 1000);
     }
+
+    async function fetchQuestionResult() {
+      // Récupère la réponse et score du participant pour cette question
+      const { data: answer } = await supabase
+        .from('participant_answers')
+        .select('answer_index, points_awarded')
+        .eq('session_id', sessionId)
+        .eq('participant_id', participantId)
+        .eq('question_index', currentQuestion.index || 0)
+        .single();
+    
+      if (!answer) return;
+    
+      const isCorrect = answer.points_awarded > 0;
+    
+      // Affiche le résultat
+      const resultEl = document.getElementById('result-message');
+      resultEl.innerHTML = `
+        <div class="result-icon">${isCorrect ? '✅' : '❌'}</div>
+        <div class="${isCorrect ? 'result-correct' : 'result-wrong'}">
+          ${isCorrect ? 'Bonne réponse !' : 'Mauvaise réponse'}<br>
+          Points pour cette question : ${answer.points_awarded}
+        </div>
+      `;
+      resultEl.style.display = 'block';
+    
+      // Met à jour le score total
+      const { data: participant } = await supabase
+        .from('session_participants')
+        .select('score')
+        .eq('id', participantId)
+        .single();
+    
+      currentScore = participant.score;
+      document.getElementById('score').textContent = currentScore;
+    }
+
 
     async function selectAnswer(answerIndex) {
       if (hasAnswered) return;
       hasAnswered = true;
 
       const responseTime = Date.now() - questionStartTime;
-      const isCorrect = answerIndex === currentQuestion.correctIndex;
 
       // Visual feedback
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
-        if (i === answerIndex) {
-          btn.classList.add('selected');
-        }
+        if (i === answerIndex) btn.classList.add('selected');
         btn.disabled = true;
       });
 
@@ -413,18 +445,7 @@
             answer_index: answerIndex,
             response_time: responseTime
           }]);
-
-        // Show result
-        showResultMessage(isCorrect);
-        
-        // Update local score (will be confirmed by server)
-        if (isCorrect) {
-          const maxTime = (currentQuestion.timeLimit || 30) * 1000;
-          const timeBonus = Math.max(0, Math.round((1 - (responseTime / maxTime)) * 500));
-          currentScore += 1000 + timeBonus;
-          document.getElementById('score').textContent = currentScore;
-        }
-
+        // Ne rien afficher ici
       } catch (err) {
         console.error('Error submitting answer:', err);
       }
