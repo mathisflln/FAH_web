@@ -225,13 +225,12 @@
     async function joinSession() {
       const code = document.getElementById('code').value.trim();
       const nickname = document.getElementById('nickname').value.trim();
-      const errorEl = document.getElementById('error-message');
-
+    
       if (!code || !nickname) {
         showError('Veuillez remplir tous les champs');
         return;
       }
-
+    
       try {
         // Find session by code
         const { data: session, error: sessionError } = await supabase
@@ -239,31 +238,31 @@
           .select('*')
           .eq('code', code)
           .single();
-
+    
         if (sessionError || !session) {
           showError('Code de session invalide');
           return;
         }
-
+    
         if (session.status === 'finished') {
           showError('Cette session est terminée');
           return;
         }
-
+    
         sessionId = session.id;
-
-        // Check if nickname is already taken in this session
+    
+        // Check if nickname is already taken
         const { data: existingParticipants } = await supabase
           .from('session_participants')
           .select('nickname')
           .eq('session_id', sessionId)
           .eq('nickname', nickname);
-
+    
         if (existingParticipants && existingParticipants.length > 0) {
           showError('Ce pseudo est déjà pris dans cette session');
           return;
         }
-
+    
         // Join session
         const { data: participant, error: joinError } = await supabase
           .from('session_participants')
@@ -274,24 +273,28 @@
           }])
           .select()
           .single();
-
-        if (joinError) throw joinError;
-
+    
+        if (joinError || !participant) {
+          showError('Impossible de rejoindre la session');
+          return;
+        }
+    
         participantId = participant.id;
         document.getElementById('player-name').textContent = nickname;
-
-        // Switch to waiting screen
+    
+        // ✅ Passer à l'écran d'attente **seulement après avoir réussi**
         document.getElementById('join-screen').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'block';
-
+    
         // Subscribe to session updates
         subscribeToSession();
-
+    
       } catch (err) {
         console.error('Join error:', err);
         showError('Erreur lors de la connexion: ' + err.message);
       }
     }
+
 
     function showError(message) {
       const errorEl = document.getElementById('error-message');
