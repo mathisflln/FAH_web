@@ -1,153 +1,57 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Rejoindre Quiz - FAH</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: "Host Grotesk", sans-serif; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-      min-height: 100vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      padding: 20px; 
-    }
-    .container { width: 100%; max-width: 500px; }
-    .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-    h1 { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 30px; color: #0d0d0d; }
-    .input-group { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
-    input { 
-      width: 100%; 
-      padding: 15px; 
-      border: 2px solid #e5e5e5; 
-      border-radius: 10px; 
-      font-family: inherit; 
-      font-size: 1rem; 
-      transition: all 0.3s; 
-    }
-    input:focus { outline: none; border-color: #667eea; }
-    .btn { 
-      width: 100%; 
-      padding: 15px; 
-      border: none; 
-      border-radius: 50px; 
-      background: #0d0d0d; 
-      color: white; 
-      font-family: inherit; 
-      font-size: 1rem; 
-      font-weight: 600; 
-      cursor: pointer; 
-      transition: all 0.3s; 
-    }
-    .btn:hover { background: #2d2d2d; transform: translateY(-2px); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .error { 
-      background: #fee; 
-      color: #c33; 
-      padding: 12px; 
-      border-radius: 8px; 
-      margin-bottom: 20px; 
-      text-align: center; 
-    }
-    .waiting-screen, .game-screen { display: none; }
-    .waiting-message { 
-      text-align: center; 
-      font-size: 1.2rem; 
-      color: #666; 
-      margin: 30px 0; 
-    }
-    .spinner { 
-      width: 50px; 
-      height: 50px; 
-      border: 4px solid #f3f3f3; 
-      border-top: 4px solid #667eea; 
-      border-radius: 50%; 
-      animation: spin 1s linear infinite; 
-      margin: 20px auto; 
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .question-text { 
-      font-size: 1.5rem; 
-      font-weight: 600; 
-      text-align: center; 
-      margin-bottom: 30px; 
-      color: #0d0d0d; 
-    }
-    .timer-display { 
-      text-align: center; 
-      font-size: 2rem; 
-      font-weight: 700; 
-      color: #667eea; 
-      margin-bottom: 20px; 
-    }
-    .timer-display.warning { color: #e74c3c; }
-    .options-grid { display: grid; gap: 15px; }
-    .option-btn { 
-      padding: 20px; 
-      border: none; 
-      border-radius: 15px; 
-      font-family: inherit; 
-      font-size: 1.1rem; 
-      font-weight: 600; 
-      color: white; 
-      cursor: pointer; 
-      transition: all 0.3s; 
-    }
-    .option-btn:hover:not(:disabled) { transform: scale(1.05); }
-    .option-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-    .option-btn.selected { 
-      border: 4px solid white; 
-      box-shadow: 0 0 20px rgba(255,255,255,0.5); 
-    }
-    .option-a { background: #e74c3c; }
-    .option-b { background: #3498db; }
-    .option-c { background: #f39c12; }
-    .option-d { background: #2ecc71; }
-    .result-message { 
-      text-align: center; 
-      padding: 30px; 
-      font-size: 1.3rem; 
-      font-weight: 600; 
-    }
-    .result-correct { color: #2ecc71; }
-    .result-wrong { color: #e74c3c; }
-    .result-icon { font-size: 3rem; margin-bottom: 10px; }
-    .score-display { 
-      text-align: center; 
-      margin: 20px 0; 
-      padding: 20px; 
-      background: linear-gradient(135deg, #FBE01D 0%, #fff4a4 100%); 
-      border-radius: 15px; 
-    }
-    .score-label { font-size: 0.9rem; color: #666; }
-    .score-value { font-size: 2rem; font-weight: 700; color: #0d0d0d; }
-    .final-screen { display: none; }
-    .final-title { 
-      font-size: 2.5rem; 
-      font-weight: 700; 
-      text-align: center; 
-      margin-bottom: 20px; 
-    }
-    .final-rank { 
-      text-align: center; 
-      font-size: 1.5rem; 
-      color: #667eea; 
-      margin-bottom: 30px; 
-    }
+    /* CSS conservé de l'original — inchangé sauf style mineur */
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:"Host Grotesk",sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .container{width:100%;max-width:500px}
+    .card{background:white;border-radius:20px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    h1{font-size:2rem;font-weight:700;text-align:center;margin-bottom:30px;color:#0d0d0d}
+    .input-group{margin-bottom:20px}
+    label{display:block;font-weight:600;margin-bottom:8px;color:#333}
+    input{width:100%;padding:15px;border:2px solid #e5e5e5;border-radius:10px;font-family:inherit;font-size:1rem;transition:all .3s}
+    input:focus{outline:none;border-color:#667eea}
+    .btn{width:100%;padding:15px;border:none;border-radius:50px;background:#0d0d0d;color:white;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;transition:all .3s}
+    .btn:hover{background:#2d2d2d;transform:translateY(-2px)}
+    .error{background:#fee;color:#c33;padding:12px;border-radius:8px;margin-bottom:20px;text-align:center}
+    .waiting-screen,.game-screen{display:none}
+    .waiting-message{text-align:center;font-size:1.2rem;color:#666;margin:30px 0}
+    .spinner{width:50px;height:50px;border:4px solid #f3f3f3;border-top:4px solid #667eea;border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .question-text{font-size:1.5rem;font-weight:600;text-align:center;margin-bottom:30px;color:#0d0d0d}
+    .timer-display{text-align:center;font-size:2rem;font-weight:700;color:#667eea;margin-bottom:20px}
+    .timer-display.warning{color:#e74c3c}
+    .options-grid{display:grid;gap:15px}
+    .option-btn{padding:20px;border:none;border-radius:15px;font-family:inherit;font-size:1.1rem;font-weight:600;color:white;cursor:pointer;transition:all .3s}
+    .option-btn:hover:not(:disabled){transform:scale(1.05)}
+    .option-btn:disabled{opacity:.7;cursor:not-allowed}
+    .option-btn.selected{border:4px solid white;box-shadow:0 0 20px rgba(255,255,255,.5)}
+    .option-a{background:#e74c3c}
+    .option-b{background:#3498db}
+    .option-c{background:#f39c12}
+    .option-d{background:#2ecc71}
+    .result-message{text-align:center;padding:30px;font-size:1.3rem;font-weight:600}
+    .result-correct{color:#2ecc71}
+    .result-wrong{color:#e74c3c}
+    .result-icon{font-size:3rem;margin-bottom:10px}
+    .score-display{text-align:center;margin:20px 0;padding:20px;background:linear-gradient(135deg,#FBE01D 0%,#fff4a4 100%);border-radius:15px}
+    .score-label{font-size:0.9rem;color:#666}
+    .score-value{font-size:2rem;font-weight:700;color:#0d0d0d}
+    .final-screen{display:none}
+    .final-title{font-size:2.5rem;font-weight:700;text-align:center;margin-bottom:20px}
+    .final-rank{text-align:center;font-size:1.5rem;color:#667eea;margin-bottom:30px}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
-      <!-- JOIN SCREEN -->
+      <!-- JOIN -->
       <div id="join-screen">
         <h1>🎯 Rejoindre le Quiz</h1>
         <div id="error-message" class="error" style="display:none;"></div>
@@ -164,7 +68,7 @@
         </form>
       </div>
 
-      <!-- WAITING SCREEN -->
+      <!-- WAITING -->
       <div id="waiting-screen" class="waiting-screen">
         <h1>✓ Connecté !</h1>
         <div class="waiting-message">
@@ -174,19 +78,22 @@
         <div class="spinner"></div>
       </div>
 
-      <!-- GAME SCREEN -->
+      <!-- GAME -->
       <div id="game-screen" class="game-screen">
-        <div class="timer-display" id="timer"></div>
+        <div class="timer-display" id="timer">⏱️ 0s</div>
         <div class="question-text" id="question-text"></div>
+
         <div class="score-display">
           <div class="score-label">Votre score</div>
           <div class="score-value" id="score">0</div>
         </div>
+
         <div class="options-grid" id="options-grid"></div>
-        <div id="result-message" class="result-message" style="display:none;"></div>
+
+        <div id="result-message" class="result-message" style="display:none;">En attente de la réponse...</div>
       </div>
 
-      <!-- FINAL SCREEN -->
+      <!-- FINAL -->
       <div id="final-screen" class="final-screen">
         <div class="final-title">🎉 Quiz terminé !</div>
         <div class="final-rank" id="final-rank"></div>
@@ -205,17 +112,15 @@
 
     let sessionId = null;
     let participantId = null;
-    let currentScore = 0;
     let currentQuestion = null;
-    let questionStartTime = null;
+    let questionStartTime = null; // timestamp from server (ms)
     let hasAnswered = false;
+    let localScore = 0;
 
-    // Pre-fill code from URL if present
+    // prefill code from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const codeParam = urlParams.get('code');
-    if (codeParam) {
-      document.getElementById('code').value = codeParam;
-    }
+    if (codeParam) document.getElementById('code').value = codeParam;
 
     document.getElementById('join-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -225,95 +130,84 @@
     async function joinSession() {
       const code = document.getElementById('code').value.trim();
       const nickname = document.getElementById('nickname').value.trim();
-      const errorEl = document.getElementById('error-message');
-
       if (!code || !nickname) {
         showError('Veuillez remplir tous les champs');
         return;
       }
 
       try {
-        // Find session by code
+        // find session by code
         const { data: session, error: sessionError } = await supabase
           .from('live_sessions')
           .select('*')
           .eq('code', code)
           .single();
-
         if (sessionError || !session) {
           showError('Code de session invalide');
           return;
         }
-
         if (session.status === 'finished') {
           showError('Cette session est terminée');
           return;
         }
-
         sessionId = session.id;
 
-        // Check if nickname is already taken in this session
-        const { data: existingParticipants } = await supabase
+        // nickname unique check
+        const { data: existing } = await supabase
           .from('session_participants')
           .select('nickname')
           .eq('session_id', sessionId)
           .eq('nickname', nickname);
 
-        if (existingParticipants && existingParticipants.length > 0) {
+        if (existing && existing.length > 0) {
           showError('Ce pseudo est déjà pris dans cette session');
           return;
         }
 
-        // Join session
+        // insert participant
         const { data: participant, error: joinError } = await supabase
           .from('session_participants')
-          .insert([{
-            session_id: sessionId,
-            nickname: nickname,
-            score: 0
-          }])
+          .insert([{ session_id: sessionId, nickname, score: 0 }])
           .select()
           .single();
 
         if (joinError) throw joinError;
-
         participantId = participant.id;
+        localScore = participant.score || 0;
         document.getElementById('player-name').textContent = nickname;
 
-        // Switch to waiting screen
+        // show waiting
         document.getElementById('join-screen').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'block';
 
-        // Subscribe to session updates
         subscribeToSession();
+        subscribeToParticipantUpdates();
 
       } catch (err) {
         console.error('Join error:', err);
-        showError('Erreur lors de la connexion: ' + err.message);
+        showError('Erreur lors de la connexion: ' + (err.message || err));
       }
     }
 
     function showError(message) {
-      const errorEl = document.getElementById('error-message');
-      errorEl.textContent = message;
-      errorEl.style.display = 'block';
-      setTimeout(() => {
-        errorEl.style.display = 'none';
-      }, 5000);
+      const el = document.getElementById('error-message');
+      el.textContent = message;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
     }
 
+    // subscribe to live_sessions updates
     function subscribeToSession() {
       supabase
-        .channel('session-updates')
+        .channel('session-updates-'+Math.random())
         .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'live_sessions',
+          event: 'UPDATE', schema: 'public', table: 'live_sessions',
           filter: `id=eq.${sessionId}`
         }, async (payload) => {
           const session = payload.new;
-          
+
           if (session.status === 'active' && session.current_question_index >= 0) {
+            // load question & compute remaining from server question_start_time
             await loadQuestion(session);
           } else if (session.status === 'finished') {
             await showFinalScreen();
@@ -322,108 +216,128 @@
         .subscribe();
     }
 
+    // subscribe to participant row updates to get authoritative score updates
+    function subscribeToParticipantUpdates() {
+      supabase
+        .channel('participant-'+sessionId+'-'+participantId)
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'public', table: 'session_participants',
+          filter: `id=eq.${participantId}`
+        }, payload => {
+          const p = payload.new;
+          localScore = p.score || localScore;
+          document.getElementById('score').textContent = localScore;
+        })
+        .subscribe();
+    }
+
+    // load question using session info from DB (authoritative start time)
     async function loadQuestion(session) {
       hasAnswered = false;
-      
-      // Get quiz data
+      // fetch quiz questions
       const { data: quiz } = await supabase
         .from('quizzes')
         .select('questions')
         .eq('id', session.quiz_id)
         .single();
-
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-
+      // server authoritative start time -> compute remaining relative to client clock
       questionStartTime = new Date(session.question_start_time).getTime();
 
-      // Switch to game screen
+      // show game UI
       document.getElementById('waiting-screen').style.display = 'none';
+      document.getElementById('final-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'block';
       document.getElementById('result-message').style.display = 'none';
 
-      // Display question
       document.getElementById('question-text').textContent = currentQuestion.question;
 
-      // Display options
+      // render options
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
-      
-      const colors = ['option-a', 'option-b', 'option-c', 'option-d'];
-      currentQuestion.options.forEach((opt, i) => {
+      const colors = ['option-a','option-b','option-c','option-d'];
+      currentQuestion.options.forEach((opt,i) => {
         const btn = document.createElement('button');
         btn.className = `option-btn ${colors[i]}`;
         btn.textContent = opt;
+        btn.disabled = false;
         btn.addEventListener('click', () => selectAnswer(i));
         optionsGrid.appendChild(btn);
       });
 
-      // Start timer
-      startTimer(currentQuestion.timeLimit || 30);
+      // start timer using server start time: remaining = timeLimit - elapsed
+      startTimerWithServerTime(currentQuestion.timeLimit || 30, questionStartTime);
     }
 
-    function startTimer(seconds) {
-      let timeLeft = seconds;
+    // Timer using server's question_start_time (keeps all clients in sync)
+    function startTimerWithServerTime(totalSeconds, serverStartMs) {
       const timerEl = document.getElementById('timer');
-      timerEl.textContent = `⏱️ ${timeLeft}s`;
-      timerEl.classList.remove('warning');
+      clearInterval(window._playerTimerInterval);
 
-      const interval = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = `⏱️ ${timeLeft}s`;
-
-        if (timeLeft <= 5) {
-          timerEl.classList.add('warning');
-        }
-
-        if (timeLeft <= 0) {
-          clearInterval(interval);
+      function updateOnce() {
+        const elapsedSec = Math.floor((Date.now() - serverStartMs) / 1000);
+        let remaining = totalSeconds - elapsedSec;
+        if (remaining < 0) remaining = 0;
+        timerEl.textContent = `⏱️ ${remaining}s`;
+        timerEl.classList.toggle('warning', remaining <= 5);
+        if (remaining === 0) {
+          clearInterval(window._playerTimerInterval);
+          // if player hasn't answered, disable options and show waiting result
           if (!hasAnswered) {
             disableOptions();
-            showResultMessage(false);
+            showWaitingMessage();
           }
         }
-      }, 1000);
+      }
+
+      // initial update then interval
+      updateOnce();
+      window._playerTimerInterval = setInterval(updateOnce, 500);
     }
 
+    // select answer: prevent duplicates by checking existing answer first
     async function selectAnswer(answerIndex) {
-      if (hasAnswered) return;
+      if (hasAnswered || !participantId || !sessionId || !currentQuestion) return;
       hasAnswered = true;
 
-      const responseTime = Date.now() - questionStartTime;
-      const isCorrect = answerIndex === currentQuestion.correctIndex;
-
-      // Visual feedback
+      // visual immediate feedback: mark selected and disable
       const buttons = document.querySelectorAll('.option-btn');
-      buttons.forEach((btn, i) => {
-        if (i === answerIndex) {
-          btn.classList.add('selected');
-        }
+      buttons.forEach((btn,i) => {
+        if (i === answerIndex) btn.classList.add('selected');
         btn.disabled = true;
       });
 
-      // Submit answer
-      try {
-        await supabase
-          .from('participant_answers')
-          .insert([{
-            session_id: sessionId,
-            participant_id: participantId,
-            question_index: currentQuestion.index || 0,
-            answer_index: answerIndex,
-            response_time: responseTime
-          }]);
+      // compute response time relative to server start time
+      const responseTimeMs = Math.max(0, Date.now() - (questionStartTime || Date.now()));
 
-        // Show result
-        showResultMessage(isCorrect);
-        
-        // Update local score (will be confirmed by server)
-        if (isCorrect) {
-          const maxTime = (currentQuestion.timeLimit || 30) * 1000;
-          const timeBonus = Math.max(0, Math.round((1 - (responseTime / maxTime)) * 500));
-          currentScore += 1000 + timeBonus;
-          document.getElementById('score').textContent = currentScore;
+      try {
+        // Check if there's already an answer for this participant & question -> if none, insert; if exists, ignore
+        const { data: existing } = await supabase
+          .from('participant_answers')
+          .select('*')
+          .eq('session_id', sessionId)
+          .eq('participant_id', participantId)
+          .eq('question_index', currentQuestion.index || 0);
+
+        if (existing && existing.length > 0) {
+          // already answered (ignore duplicate attempt)
+          console.warn('Answer already exists for participant/question — ignoring duplicate submit.');
+        } else {
+          // insert answer (server/host will compute correctness & award points)
+          await supabase
+            .from('participant_answers')
+            .insert([{
+              session_id: sessionId,
+              participant_id: participantId,
+              question_index: currentQuestion.index || 0,
+              answer_index: answerIndex,
+              response_time: responseTimeMs
+            }]);
         }
+
+        // Show "waiting" instead of revealing correct/wrong
+        showWaitingMessage();
 
       } catch (err) {
         console.error('Error submitting answer:', err);
@@ -431,23 +345,19 @@
     }
 
     function disableOptions() {
-      document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.disabled = true;
-      });
+      document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
     }
 
-    function showResultMessage(isCorrect) {
-      const resultEl = document.getElementById('result-message');
-      if (isCorrect) {
-        resultEl.innerHTML = '<div class="result-icon">✓</div><div class="result-correct">Bonne réponse !</div>';
-      } else {
-        resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
-      }
-      resultEl.style.display = 'block';
+    // Show waiting message (player doesn't get correct/wrong)
+    function showWaitingMessage() {
+      const el = document.getElementById('result-message');
+      el.style.display = 'block';
+      el.textContent = 'En attente de la réponse...';
     }
 
+    // Final screen: fetch authoritative score & rank
     async function showFinalScreen() {
-      // Get final score and rank
+      // get final participant row
       const { data: participant } = await supabase
         .from('session_participants')
         .select('score')
@@ -465,7 +375,7 @@
       document.getElementById('game-screen').style.display = 'none';
       document.getElementById('final-screen').style.display = 'block';
       document.getElementById('final-rank').textContent = `Vous êtes #${rank} sur ${allParticipants.length}`;
-      document.getElementById('final-score').textContent = participant.score;
+      document.getElementById('final-score').textContent = participant.score || 0;
     }
   </script>
 </body>
