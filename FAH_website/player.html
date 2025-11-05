@@ -370,19 +370,20 @@
       const timerEl = document.getElementById('timer');
       timerEl.textContent = `⏱️ ${timeLeft}s`;
       timerEl.classList.remove('warning');
-
+    
       const interval = setInterval(() => {
         timeLeft--;
         timerEl.textContent = `⏱️ ${timeLeft}s`;
-
-        if (timeLeft <= 5) {
-          timerEl.classList.add('warning');
-        }
-
+    
+        if (timeLeft <= 5) timerEl.classList.add('warning');
+    
         if (timeLeft <= 0) {
           clearInterval(interval);
           disableOptions();
-          await fetchQuestionResult(); // <-- nouvelle fonction
+          // Utiliser une IIFE pour gérer l'async correctement
+          (async () => {
+            await fetchQuestionResult();
+          })();
         }
       }, 1000);
     }
