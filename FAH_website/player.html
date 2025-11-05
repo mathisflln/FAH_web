@@ -249,16 +249,6 @@
           return;
         }
 
-        // Vérifier l'expiration
-        const sessionCreated = new Date(session.created_at);
-        const now = new Date();
-        const hourInMs = 60 * 60 * 1000;
-        if (now - sessionCreated > hourInMs) {
-          showError('Cette session a expiré');
-          localStorage.removeItem('quizPlayerData');
-          return;
-        }
-
         // Vérifier que le participant existe
         const { data: participant, error: partError } = await supabase
           .from('session_participants')
@@ -335,15 +325,6 @@
 
         if (sessionError || !session) {
           showError('Code de session invalide');
-          return;
-        }
-
-        // Vérifier l'expiration
-        const sessionCreated = new Date(session.created_at);
-        const now = new Date();
-        const hourInMs = 60 * 60 * 1000;
-        if (now - sessionCreated > hourInMs) {
-          showError('Cette session a expiré');
           return;
         }
 
