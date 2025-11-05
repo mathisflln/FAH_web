@@ -337,6 +337,7 @@
     
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
+      currentQuestion.index = session.current_question_index; // <- ajouté
     
       questionStartTime = new Date(session.question_start_time).getTime();
     
@@ -417,14 +418,14 @@
       resultEl.style.display = 'block';
     
       // Met à jour le score total
-      const { data: participant } = await supabase
-        .from('session_participants')
-        .select('score')
-        .eq('id', participantId)
-        .single();
+      const { data: answers } = await supabase
+      .from('participant_answers')
+      .select('points_awarded')
+      .eq('session_id', sessionId)
+      .eq('participant_id', participantId);
     
-      currentScore = participant.score;
-      document.getElementById('score').textContent = currentScore;
+    currentScore = answers.reduce((sum, a) => sum + (a.points_awarded || 0), 0);
+    document.getElementById('score').textContent = currentScore;
     }
 
 
