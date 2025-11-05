@@ -436,13 +436,12 @@
       });
     }
 
-    function showResultMessage(isCorrect) {
+    function showResultMessage() {
       const resultEl = document.getElementById('result-message');
-      if (isCorrect) {
-        resultEl.innerHTML = '<div class="result-icon">✓</div><div class="result-correct">Bonne réponse !</div>';
-      } else {
-        resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
-      }
+      resultEl.innerHTML = `
+        <div class="result-icon">⏳</div>
+        <div style="color:#666;">Réponse envoyée, en attente de l’hôte...</div>
+      `;
       resultEl.style.display = 'block';
     }
 
