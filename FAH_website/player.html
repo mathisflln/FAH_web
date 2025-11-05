@@ -337,8 +337,8 @@
     
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-      currentQuestion.index = session.current_question_index; // <- ajouté
-    
+      currentQuestion.index = session.current_question_index; // <-- ajouter
+
       questionStartTime = new Date(session.question_start_time).getTime();
     
       // Switch to game screen
