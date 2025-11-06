@@ -320,21 +320,10 @@
           } else if (session.status === 'finished') {
             await showFinalScreen();
           }
-        })
-        .subscribe();
-      
-      // NOUVEAU : Écouter les mises à jour des réponses pour afficher le résultat en temps réel
-      // Écouter les mises à jour du score du participant
-      supabase
-        .channel('participant-score-updates')
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'session_participants',
-          filter: `id=eq.${participantId}`
-        }, async (payload) => {
-          console.log('Participant updated:', payload.new);
-          if (hasAnswered) {
+          
+          // Déclencher l'affichage du résultat quand la session est mise à jour
+          if (hasAnswered && session.last_update) {
+            console.log('Session updated, checking result...');
             await displayQuestionResult();
           }
         })
