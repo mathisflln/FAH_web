@@ -304,6 +304,7 @@
     }
 
     function subscribeToSession() {
+      // Écouter les changements de session (nouvelle question, fin de quiz)
       supabase
         .channel('session-updates')
         .on('postgres_changes', {
@@ -318,6 +319,24 @@
             await loadQuestion(session);
           } else if (session.status === 'finished') {
             await showFinalScreen();
+          }
+        })
+        .subscribe();
+      
+      // NOUVEAU : Écouter les mises à jour des réponses pour afficher le résultat en temps réel
+      supabase
+        .channel('answer-updates')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'participant_answers',
+          filter: `participant_id=eq.${participantId}`
+        }, async (payload) => {
+          const answer = payload.new;
+          
+          // Quand l'hôte a évalué la réponse, afficher le résultat
+          if (answer.is_correct !== null && hasAnswered) {
+            await displayQuestionResult();
           }
         })
         .subscribe();
@@ -351,7 +370,7 @@
     
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-      currentQuestion.index = session.current_question_index; // Ajouter l'index
+      currentQuestion.index = session.current_question_index;
     
       questionStartTime = new Date(session.question_start_time).getTime();
     
@@ -388,7 +407,7 @@
         optionsGrid.appendChild(btn);
       });
     
-      // Start timer normalement
+      // Start timer
       startTimer(currentQuestion.timeLimit || 30);
     }
 
@@ -413,53 +432,15 @@
         if (timeLeft <= 0) {
           clearInterval(currentTimerInterval);
           disableOptions();
-          // Afficher le résultat après le temps écoulé
-          displayQuestionResult();
+          
+          // Si le joueur n'a pas répondu, afficher un message
+          if (!hasAnswered) {
+            const resultEl = document.getElementById('result-message');
+            resultEl.innerHTML = '<div class="result-icon">⏰</div><div class="result-wrong">Temps écoulé !</div>';
+            resultEl.style.display = 'block';
+          }
         }
       }, 1000);
-    }
-
-    async function displayQuestionResult() {
-      // Attendre un peu pour que le serveur ait le temps de calculer les scores
-      await new Promise(resolve => setTimeout(resolve, 500));
-    
-      // Récupérer la réponse du participant
-      const { data: answer } = await supabase
-        .from('participant_answers')
-        .select('answer_index, is_correct, points_earned')
-        .eq('session_id', sessionId)
-        .eq('participant_id', participantId)
-        .eq('question_index', currentQuestion.index || 0)
-        .maybeSingle();
-    
-      if (answer) {
-        // Récupérer le score total mis à jour depuis le serveur
-        const { data: participant } = await supabase
-          .from('session_participants')
-          .select('score')
-          .eq('id', participantId)
-          .single();
-    
-        if (participant) {
-          currentScore = participant.score;
-          document.getElementById('score').textContent = currentScore;
-        }
-    
-        // Afficher le résultat avec les points gagnés
-        if (answer.is_correct && answer.points_earned) {
-          const resultEl = document.getElementById('result-message');
-          resultEl.innerHTML = `
-            <div class="result-icon">✓</div>
-            <div class="result-correct">Bonne réponse !</div>
-            <div style="color: #667eea; font-size: 1.1rem; margin-top: 10px;">+${answer.points_earned} points</div>
-          `;
-        } else {
-          showResultMessage(false);
-        }
-      } else if (!hasAnswered) {
-        // Aucune réponse donnée
-        showResultMessage(false);
-      }
     }
 
     async function selectAnswer(answerIndex) {
@@ -468,7 +449,7 @@
     
       const responseTime = Date.now() - questionStartTime;
     
-      // Visual feedback - juste sélectionner, pas de résultat
+      // Visual feedback
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
         if (i === answerIndex) {
@@ -482,20 +463,62 @@
       resultEl.innerHTML = '<div class="result-icon">⏳</div><div style="color: #667eea;">Réponse enregistrée ! En attente des résultats...</div>';
       resultEl.style.display = 'block';
     
-      // Submit answer (sans afficher le résultat)
+      // Submit answer
       try {
         await supabase
           .from('participant_answers')
           .insert([{
             session_id: sessionId,
             participant_id: participantId,
-            question_index: currentQuestion.index || 0,
+            question_index: currentQuestion.index,
             answer_index: answerIndex,
             response_time: responseTime
           }]);
     
+        // Le résultat sera affiché automatiquement via la subscription
+        // quand l'hôte aura évalué la réponse
+    
       } catch (err) {
         console.error('Error submitting answer:', err);
+      }
+    }
+
+    // FONCTION CORRIGÉE : Affiche le résultat quand l'hôte a évalué la réponse
+    async function displayQuestionResult() {
+      // Récupérer la réponse du participant
+      const { data: answer } = await supabase
+        .from('participant_answers')
+        .select('answer_index, is_correct, points_earned')
+        .eq('session_id', sessionId)
+        .eq('participant_id', participantId)
+        .eq('question_index', currentQuestion.index)
+        .maybeSingle();
+    
+      if (answer && answer.is_correct !== null) {
+        // Récupérer le score total mis à jour depuis le serveur
+        const { data: participant } = await supabase
+          .from('session_participants')
+          .select('score')
+          .eq('id', participantId)
+          .single();
+    
+        if (participant) {
+          currentScore = participant.score;
+          document.getElementById('score').textContent = currentScore;
+        }
+    
+        // Afficher le résultat avec les points gagnés
+        const resultEl = document.getElementById('result-message');
+        if (answer.is_correct && answer.points_earned) {
+          resultEl.innerHTML = `
+            <div class="result-icon">✓</div>
+            <div class="result-correct">Bonne réponse !</div>
+            <div style="color: #667eea; font-size: 1.1rem; margin-top: 10px;">+${answer.points_earned} points</div>
+          `;
+        } else {
+          resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
+        }
+        resultEl.style.display = 'block';
       }
     }
 
@@ -503,16 +526,6 @@
       document.querySelectorAll('.option-btn').forEach(btn => {
         btn.disabled = true;
       });
-    }
-
-    function showResultMessage(isCorrect) {
-      const resultEl = document.getElementById('result-message');
-      if (isCorrect) {
-        resultEl.innerHTML = '<div class="result-icon">✓</div><div class="result-correct">Bonne réponse !</div>';
-      } else {
-        resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
-      }
-      resultEl.style.display = 'block';
     }
 
     async function showFinalScreen() {
