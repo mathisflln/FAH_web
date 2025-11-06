@@ -286,7 +286,6 @@
 
         // Subscribe to session updates
         subscribeToSession();
-        await restorePlayerState();
 
       } catch (err) {
         console.error('Join error:', err);
@@ -304,7 +303,6 @@
     }
 
     function subscribeToSession() {
-      // Écouter les changements de session (nouvelle question, fin de quiz)
       supabase
         .channel('session-updates')
         .on('postgres_changes', {
@@ -320,30 +318,8 @@
           } else if (session.status === 'finished') {
             await showFinalScreen();
           }
-          
-          // Déclencher l'affichage du résultat quand la session est mise à jour
-          if (hasAnswered && session.last_update) {
-            console.log('Session updated, checking result...');
-            await displayQuestionResult();
-          }
         })
         .subscribe();
-    }
-
-    async function restorePlayerState() {
-      const { data: session } = await supabase
-        .from('live_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .single();
-    
-      if (!session) return;
-    
-      if (session.status === 'active' && session.current_question_index >= 0) {
-        await loadQuestion(session);
-      } else if (session.status === 'finished') {
-        await showFinalScreen();
-      }
     }
 
     async function loadQuestion(session) {
@@ -358,7 +334,7 @@
     
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-      currentQuestion.index = session.current_question_index;
+      currentQuestion.index = session.current_question_index; // Ajouter l'index
     
       questionStartTime = new Date(session.question_start_time).getTime();
     
@@ -395,7 +371,7 @@
         optionsGrid.appendChild(btn);
       });
     
-      // Start timer
+      // Start timer normalement
       startTimer(currentQuestion.timeLimit || 30);
     }
 
@@ -420,108 +396,26 @@
         if (timeLeft <= 0) {
           clearInterval(currentTimerInterval);
           disableOptions();
-          
-          // Si le joueur n'a pas répondu, afficher un message
-          if (!hasAnswered) {
-            const resultEl = document.getElementById('result-message');
-            resultEl.innerHTML = '<div class="result-icon">⏰</div><div class="result-wrong">Temps écoulé !</div>';
-            resultEl.style.display = 'block';
-          }
+          // Afficher le résultat après le temps écoulé
+          displayQuestionResult();
         }
       }, 1000);
     }
 
-    async function selectAnswer(answerIndex) {
-      if (hasAnswered) return;
-      hasAnswered = true;
-    
-      const responseTime = Date.now() - questionStartTime;
-    
-      // Visual feedback
-      const buttons = document.querySelectorAll('.option-btn');
-      buttons.forEach((btn, i) => {
-        if (i === answerIndex) {
-          btn.classList.add('selected');
-        }
-        btn.disabled = true;
-      });
-    
-      // Afficher message d'attente
-      const resultEl = document.getElementById('result-message');
-      resultEl.innerHTML = '<div class="result-icon">⏳</div><div style="color: #667eea;">Réponse enregistrée ! En attente des résultats...</div>';
-      resultEl.style.display = 'block';
-    
-      // Submit answer
-      try {
-        await supabase
-          .from('participant_answers')
-          .insert([{
-            session_id: sessionId,
-            participant_id: participantId,
-            question_index: currentQuestion.index,
-            answer_index: answerIndex,
-            response_time: responseTime
-          }]);
-    
-        // NOUVEAU : Vérifier régulièrement si la réponse a été évaluée
-        pollForResult();
-    
-      } catch (err) {
-        console.error('Error submitting answer:', err);
-      }
-    }
-
-    let pollInterval = null;
-
-    function pollForResult() {
-      let attempts = 0;
-      const maxAttempts = 60; // 30 secondes max (60 * 500ms)
-      
-      pollInterval = setInterval(async () => {
-        attempts++;
-        console.log(`Polling attempt ${attempts}...`);
-        
-        const { data: answers } = await supabase
-          .from('participant_answers')
-          .select('is_correct, points_earned')
-          .eq('session_id', sessionId)
-          .eq('participant_id', participantId)
-          .eq('question_index', currentQuestion.index)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        const answer = answers?.[0];
-        
-        if (answer && answer.is_correct !== null) {
-          console.log('Result found!', answer);
-          clearInterval(pollInterval);
-          await displayQuestionResult();
-        }
-        
-        if (attempts >= maxAttempts) {
-          console.log('Max polling attempts reached');
-          clearInterval(pollInterval);
-        }
-      }, 500); // Vérifier toutes les 500ms
-    }
-
-    // FONCTION CORRIGÉE : Affiche le résultat quand l'hôte a évalué la réponse
     async function displayQuestionResult() {
-      if (pollInterval) clearInterval(pollInterval); // AJOUTER CETTE LIGNE
+      // Attendre un peu pour que le serveur ait le temps de calculer les scores
+      await new Promise(resolve => setTimeout(resolve, 500));
+    
       // Récupérer la réponse du participant
-      const { data: answers } = await supabase
+      const { data: answer } = await supabase
         .from('participant_answers')
         .select('answer_index, is_correct, points_earned')
         .eq('session_id', sessionId)
         .eq('participant_id', participantId)
-        .eq('question_index', currentQuestion.index)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      const answer = answers?.[0];
-      console.log('Displaying result for answer:', answer);
+        .eq('question_index', currentQuestion.index || 0)
+        .maybeSingle();
     
-      if (answer && answer.is_correct !== null) {
+      if (answer) {
         // Récupérer le score total mis à jour depuis le serveur
         const { data: participant } = await supabase
           .from('session_participants')
@@ -535,17 +429,56 @@
         }
     
         // Afficher le résultat avec les points gagnés
-        const resultEl = document.getElementById('result-message');
         if (answer.is_correct && answer.points_earned) {
+          const resultEl = document.getElementById('result-message');
           resultEl.innerHTML = `
             <div class="result-icon">✓</div>
             <div class="result-correct">Bonne réponse !</div>
             <div style="color: #667eea; font-size: 1.1rem; margin-top: 10px;">+${answer.points_earned} points</div>
           `;
         } else {
-          resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
+          showResultMessage(false);
         }
-        resultEl.style.display = 'block';
+      } else if (!hasAnswered) {
+        // Aucune réponse donnée
+        showResultMessage(false);
+      }
+    }
+
+    async function selectAnswer(answerIndex) {
+      if (hasAnswered) return;
+      hasAnswered = true;
+    
+      const responseTime = Date.now() - questionStartTime;
+    
+      // Visual feedback - juste sélectionner, pas de résultat
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach((btn, i) => {
+        if (i === answerIndex) {
+          btn.classList.add('selected');
+        }
+        btn.disabled = true;
+      });
+    
+      // Afficher message d'attente
+      const resultEl = document.getElementById('result-message');
+      resultEl.innerHTML = '<div class="result-icon">⏳</div><div style="color: #667eea;">Réponse enregistrée ! En attente des résultats...</div>';
+      resultEl.style.display = 'block';
+    
+      // Submit answer (sans afficher le résultat)
+      try {
+        await supabase
+          .from('participant_answers')
+          .insert([{
+            session_id: sessionId,
+            participant_id: participantId,
+            question_index: currentQuestion.index || 0,
+            answer_index: answerIndex,
+            response_time: responseTime
+          }]);
+    
+      } catch (err) {
+        console.error('Error submitting answer:', err);
       }
     }
 
@@ -553,6 +486,16 @@
       document.querySelectorAll('.option-btn').forEach(btn => {
         btn.disabled = true;
       });
+    }
+
+    function showResultMessage(isCorrect) {
+      const resultEl = document.getElementById('result-message');
+      if (isCorrect) {
+        resultEl.innerHTML = '<div class="result-icon">✓</div><div class="result-correct">Bonne réponse !</div>';
+      } else {
+        resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
+      }
+      resultEl.style.display = 'block';
     }
 
     async function showFinalScreen() {
