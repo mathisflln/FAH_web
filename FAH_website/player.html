@@ -391,6 +391,9 @@
     }
 
     async function displayQuestionResult() {
+      // Attendre un peu pour que le serveur ait le temps de calculer les scores
+      await new Promise(resolve => setTimeout(resolve, 500));
+    
       // Récupérer la réponse du participant
       const { data: answer } = await supabase
         .from('participant_answers')
@@ -398,16 +401,31 @@
         .eq('session_id', sessionId)
         .eq('participant_id', participantId)
         .eq('question_index', currentQuestion.index || 0)
-        .single();
+        .maybeSingle();
     
       if (answer) {
-        // Afficher si la réponse était correcte
-        showResultMessage(answer.is_correct);
-        
-        // Mettre à jour le score avec les points réels du serveur
-        if (answer.points_earned) {
-          currentScore = await fetchCurrentScore();
+        // Récupérer le score total mis à jour depuis le serveur
+        const { data: participant } = await supabase
+          .from('session_participants')
+          .select('score')
+          .eq('id', participantId)
+          .single();
+    
+        if (participant) {
+          currentScore = participant.score;
           document.getElementById('score').textContent = currentScore;
+        }
+    
+        // Afficher le résultat avec les points gagnés
+        if (answer.is_correct && answer.points_earned) {
+          const resultEl = document.getElementById('result-message');
+          resultEl.innerHTML = `
+            <div class="result-icon">✓</div>
+            <div class="result-correct">Bonne réponse !</div>
+            <div style="color: #667eea; font-size: 1.1rem; margin-top: 10px;">+${answer.points_earned} points</div>
+          `;
+        } else {
+          showResultMessage(false);
         }
       } else if (!hasAnswered) {
         // Aucune réponse donnée
