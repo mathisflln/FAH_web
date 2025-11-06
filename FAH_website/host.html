@@ -333,6 +333,9 @@
       await new Promise(resolve => setTimeout(resolve, 2500));
     
       const question = quizData.questions[currentQuestionIndex];
+
+      // Remettre le texte de la question
+      questionText.textContent = question.question;
       
       // Get all answers for this question
       const { data: answers } = await supabase
