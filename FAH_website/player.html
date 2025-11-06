@@ -225,12 +225,13 @@
     async function joinSession() {
       const code = document.getElementById('code').value.trim();
       const nickname = document.getElementById('nickname').value.trim();
-    
+      const errorEl = document.getElementById('error-message');
+
       if (!code || !nickname) {
         showError('Veuillez remplir tous les champs');
         return;
       }
-    
+
       try {
         // Find session by code
         const { data: session, error: sessionError } = await supabase
@@ -238,31 +239,31 @@
           .select('*')
           .eq('code', code)
           .single();
-    
+
         if (sessionError || !session) {
           showError('Code de session invalide');
           return;
         }
-    
+
         if (session.status === 'finished') {
           showError('Cette session est terminée');
           return;
         }
-    
+
         sessionId = session.id;
-    
-        // Check if nickname is already taken
+
+        // Check if nickname is already taken in this session
         const { data: existingParticipants } = await supabase
           .from('session_participants')
           .select('nickname')
           .eq('session_id', sessionId)
           .eq('nickname', nickname);
-    
+
         if (existingParticipants && existingParticipants.length > 0) {
           showError('Ce pseudo est déjà pris dans cette session');
           return;
         }
-    
+
         // Join session
         const { data: participant, error: joinError } = await supabase
           .from('session_participants')
@@ -273,28 +274,24 @@
           }])
           .select()
           .single();
-    
-        if (joinError || !participant) {
-          showError('Impossible de rejoindre la session');
-          return;
-        }
-    
+
+        if (joinError) throw joinError;
+
         participantId = participant.id;
         document.getElementById('player-name').textContent = nickname;
-    
-        // ✅ Passer à l'écran d'attente **seulement après avoir réussi**
+
+        // Switch to waiting screen
         document.getElementById('join-screen').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'block';
-    
+
         // Subscribe to session updates
         subscribeToSession();
-    
+
       } catch (err) {
         console.error('Join error:', err);
         showError('Erreur lors de la connexion: ' + err.message);
       }
     }
-
 
     function showError(message) {
       const errorEl = document.getElementById('error-message');
@@ -334,23 +331,20 @@
         .select('questions')
         .eq('id', session.quiz_id)
         .single();
-    
+
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-      currentQuestion.index = session.current_question_index; // <-- ajouter
 
       questionStartTime = new Date(session.question_start_time).getTime();
-    
+
       // Switch to game screen
       document.getElementById('waiting-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'block';
-    
-      // **Cacher le résultat précédent**
       document.getElementById('result-message').style.display = 'none';
-    
+
       // Display question
       document.getElementById('question-text').textContent = currentQuestion.question;
-    
+
       // Display options
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
@@ -363,88 +357,51 @@
         btn.addEventListener('click', () => selectAnswer(i));
         optionsGrid.appendChild(btn);
       });
-    
+
       // Start timer
       startTimer(currentQuestion.timeLimit || 30);
     }
-
 
     function startTimer(seconds) {
       let timeLeft = seconds;
       const timerEl = document.getElementById('timer');
       timerEl.textContent = `⏱️ ${timeLeft}s`;
       timerEl.classList.remove('warning');
-    
+
       const interval = setInterval(() => {
         timeLeft--;
         timerEl.textContent = `⏱️ ${timeLeft}s`;
-    
-        if (timeLeft <= 5) timerEl.classList.add('warning');
-    
+
+        if (timeLeft <= 5) {
+          timerEl.classList.add('warning');
+        }
+
         if (timeLeft <= 0) {
           clearInterval(interval);
-          disableOptions();
-          // Utiliser une IIFE pour gérer l'async correctement
-          (async () => {
-            await fetchQuestionResult();
-          })();
+          if (!hasAnswered) {
+            disableOptions();
+            showResultMessage(false);
+          }
         }
       }, 1000);
     }
 
-    async function fetchQuestionResult() {
-      // Récupère la réponse et score du participant pour cette question
-      const { data: answer } = await supabase
-        .from('participant_answers')
-        .select('answer_index, points_awarded')
-        .eq('session_id', sessionId)
-        .eq('participant_id', participantId)
-        .eq('question_index', currentQuestion.index || 0)
-        .single();
-    
-      if (!answer) return;
-    
-      const isCorrect = answer.points_awarded > 0;
-    
-      // Affiche le résultat
-      const resultEl = document.getElementById('result-message');
-      resultEl.innerHTML = `
-        <div class="result-icon">${isCorrect ? '✅' : '❌'}</div>
-        <div class="${isCorrect ? 'result-correct' : 'result-wrong'}">
-          ${isCorrect ? 'Bonne réponse !' : 'Mauvaise réponse'}<br>
-          Points pour cette question : ${answer.points_awarded}
-        </div>
-      `;
-      resultEl.style.display = 'block';
-    
-      // Met à jour le score total
-      const { data: answers } = await supabase
-      .from('participant_answers')
-      .select('points_awarded')
-      .eq('session_id', sessionId)
-      .eq('participant_id', participantId);
-    
-    currentScore = answers.reduce((sum, a) => sum + (a.points_awarded || 0), 0);
-    document.getElementById('score').textContent = currentScore;
-    }
-
-
     async function selectAnswer(answerIndex) {
       if (hasAnswered) return;
       hasAnswered = true;
-    
+
       const responseTime = Date.now() - questionStartTime;
-    
+      const isCorrect = answerIndex === currentQuestion.correctIndex;
+
       // Visual feedback
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
-        if (i === answerIndex) btn.classList.add('selected');
+        if (i === answerIndex) {
+          btn.classList.add('selected');
+        }
         btn.disabled = true;
       });
-    
-      // Affiche le message "en attente des autres réponses"
-      showResultMessage();
-    
+
       // Submit answer
       try {
         await supabase
@@ -456,7 +413,18 @@
             answer_index: answerIndex,
             response_time: responseTime
           }]);
-        // Ne rien afficher ici
+
+        // Show result
+        showResultMessage(isCorrect);
+        
+        // Update local score (will be confirmed by server)
+        if (isCorrect) {
+          const maxTime = (currentQuestion.timeLimit || 30) * 1000;
+          const timeBonus = Math.max(0, Math.round((1 - (responseTime / maxTime)) * 500));
+          currentScore += 1000 + timeBonus;
+          document.getElementById('score').textContent = currentScore;
+        }
+
       } catch (err) {
         console.error('Error submitting answer:', err);
       }
@@ -468,12 +436,13 @@
       });
     }
 
-    function showResultMessage() {
+    function showResultMessage(isCorrect) {
       const resultEl = document.getElementById('result-message');
-      resultEl.innerHTML = `
-        <div class="result-icon">⏳</div>
-        <div style="color:#666;">Réponse envoyée, en attente de l’hôte...</div>
-      `;
+      if (isCorrect) {
+        resultEl.innerHTML = '<div class="result-icon">✓</div><div class="result-correct">Bonne réponse !</div>';
+      } else {
+        resultEl.innerHTML = '<div class="result-icon">✗</div><div class="result-wrong">Mauvaise réponse</div>';
+      }
       resultEl.style.display = 'block';
     }
 
