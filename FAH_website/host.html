@@ -379,6 +379,9 @@
     async function updateScores() {
       const question = quizData.questions[currentQuestionIndex];
       const maxTime = (question.timeLimit || 30) * 1000;
+
+      console.log('Question:', question); // AJOUTER CETTE LIGNE POUR DEBUG
+      console.log('correctIndex:', question.correctIndex); // AJOUTER CETTE LIGNE
     
       const { data: answers } = await supabase
         .from('participant_answers')
@@ -387,8 +390,11 @@
         .eq('question_index', currentQuestionIndex);
     
       if (!answers) return;
+
+      console.log('Answers:', answers); // AJOUTER CETTE LIGNE
     
       for (const answer of answers) {
+        console.log('Comparing:', answer.answer_index, '===', question.correctIndex); // AJOUTER
         if (answer.answer_index === question.correctIndex) {
           // Points progressifs : 1000 points instantanés, diminue linéairement jusqu'à 0
           const timeRatio = Math.max(0, 1 - (answer.response_time / maxTime));
