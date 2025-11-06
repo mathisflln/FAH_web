@@ -342,6 +342,18 @@
       document.getElementById('waiting-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'block';
       document.getElementById('result-message').style.display = 'none';
+
+      // Rafraîchir le score actuel depuis le serveur
+      const { data: participant } = await supabase
+        .from('session_participants')
+        .select('score')
+        .eq('id', participantId)
+        .single();
+      
+      if (participant) {
+        currentScore = participant.score;
+        document.getElementById('score').textContent = currentScore;
+      }
     
       // Display question
       document.getElementById('question-text').textContent = currentQuestion.question;
@@ -431,16 +443,6 @@
         // Aucune réponse donnée
         showResultMessage(false);
       }
-    }
-    
-    async function fetchCurrentScore() {
-      const { data } = await supabase
-        .from('session_participants')
-        .select('score')
-        .eq('id', participantId)
-        .single();
-      
-      return data?.score || 0;
     }
 
     async function selectAnswer(answerIndex) {
