@@ -331,20 +331,21 @@
         .select('questions')
         .eq('id', session.quiz_id)
         .single();
-
+    
       const questions = typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions;
       currentQuestion = questions[session.current_question_index];
-
+      currentQuestion.index = session.current_question_index; // Ajouter l'index
+    
       questionStartTime = new Date(session.question_start_time).getTime();
-
+    
       // Switch to game screen
       document.getElementById('waiting-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'block';
       document.getElementById('result-message').style.display = 'none';
-
+    
       // Display question
       document.getElementById('question-text').textContent = currentQuestion.question;
-
+    
       // Display options
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
@@ -357,43 +358,85 @@
         btn.addEventListener('click', () => selectAnswer(i));
         optionsGrid.appendChild(btn);
       });
-
-      // Start timer
-      startTimer(currentQuestion.timeLimit || 30);
+    
+      // Calculer le temps restant basé sur l'heure de début du serveur
+      const timeLimit = currentQuestion.timeLimit || 30;
+      const elapsedTime = Math.floor((Date.now() - questionStartTime) / 1000);
+      const remainingTime = Math.max(0, timeLimit - elapsedTime);
+    
+      // Start timer avec le temps restant synchronisé
+      startTimer(remainingTime);
     }
+
+    let currentTimerInterval = null;
 
     function startTimer(seconds) {
       let timeLeft = seconds;
       const timerEl = document.getElementById('timer');
       timerEl.textContent = `⏱️ ${timeLeft}s`;
       timerEl.classList.remove('warning');
-
-      const interval = setInterval(() => {
+    
+      if (currentTimerInterval) clearInterval(currentTimerInterval);
+    
+      currentTimerInterval = setInterval(() => {
         timeLeft--;
         timerEl.textContent = `⏱️ ${timeLeft}s`;
-
+    
         if (timeLeft <= 5) {
           timerEl.classList.add('warning');
         }
-
+    
         if (timeLeft <= 0) {
-          clearInterval(interval);
-          if (!hasAnswered) {
-            disableOptions();
-            showResultMessage(false);
-          }
+          clearInterval(currentTimerInterval);
+          disableOptions();
+          // Afficher le résultat après le temps écoulé
+          displayQuestionResult();
         }
       }, 1000);
+    }
+
+    async function displayQuestionResult() {
+      // Récupérer la réponse du participant
+      const { data: answer } = await supabase
+        .from('participant_answers')
+        .select('answer_index, is_correct, points_earned')
+        .eq('session_id', sessionId)
+        .eq('participant_id', participantId)
+        .eq('question_index', currentQuestion.index || 0)
+        .single();
+    
+      if (answer) {
+        // Afficher si la réponse était correcte
+        showResultMessage(answer.is_correct);
+        
+        // Mettre à jour le score avec les points réels du serveur
+        if (answer.points_earned) {
+          currentScore = await fetchCurrentScore();
+          document.getElementById('score').textContent = currentScore;
+        }
+      } else if (!hasAnswered) {
+        // Aucune réponse donnée
+        showResultMessage(false);
+      }
+    }
+    
+    async function fetchCurrentScore() {
+      const { data } = await supabase
+        .from('session_participants')
+        .select('score')
+        .eq('id', participantId)
+        .single();
+      
+      return data?.score || 0;
     }
 
     async function selectAnswer(answerIndex) {
       if (hasAnswered) return;
       hasAnswered = true;
-
+    
       const responseTime = Date.now() - questionStartTime;
-      const isCorrect = answerIndex === currentQuestion.correctIndex;
-
-      // Visual feedback
+    
+      // Visual feedback - juste sélectionner, pas de résultat
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
         if (i === answerIndex) {
@@ -401,8 +444,13 @@
         }
         btn.disabled = true;
       });
-
-      // Submit answer
+    
+      // Afficher message d'attente
+      const resultEl = document.getElementById('result-message');
+      resultEl.innerHTML = '<div class="result-icon">⏳</div><div style="color: #667eea;">Réponse enregistrée ! En attente des résultats...</div>';
+      resultEl.style.display = 'block';
+    
+      // Submit answer (sans afficher le résultat)
       try {
         await supabase
           .from('participant_answers')
@@ -413,18 +461,7 @@
             answer_index: answerIndex,
             response_time: responseTime
           }]);
-
-        // Show result
-        showResultMessage(isCorrect);
-        
-        // Update local score (will be confirmed by server)
-        if (isCorrect) {
-          const maxTime = (currentQuestion.timeLimit || 30) * 1000;
-          const timeBonus = Math.max(0, Math.round((1 - (responseTime / maxTime)) * 500));
-          currentScore += 1000 + timeBonus;
-          document.getElementById('score').textContent = currentScore;
-        }
-
+    
       } catch (err) {
         console.error('Error submitting answer:', err);
       }
