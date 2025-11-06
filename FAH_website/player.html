@@ -324,18 +324,17 @@
         .subscribe();
       
       // NOUVEAU : Écouter les mises à jour des réponses pour afficher le résultat en temps réel
+      // Écouter les mises à jour du score du participant
       supabase
-        .channel('answer-updates')
+        .channel('participant-score-updates')
         .on('postgres_changes', {
           event: 'UPDATE',
           schema: 'public',
-          table: 'participant_answers',
-          filter: `participant_id=eq.${participantId}`
+          table: 'session_participants',
+          filter: `id=eq.${participantId}`
         }, async (payload) => {
-          const answer = payload.new;
-          
-          // Quand l'hôte a évalué la réponse, afficher le résultat
-          if (answer.is_correct !== null && hasAnswered) {
+          console.log('Participant updated:', payload.new);
+          if (hasAnswered) {
             await displayQuestionResult();
           }
         })
@@ -486,13 +485,17 @@
     // FONCTION CORRIGÉE : Affiche le résultat quand l'hôte a évalué la réponse
     async function displayQuestionResult() {
       // Récupérer la réponse du participant
-      const { data: answer } = await supabase
+      const { data: answers } = await supabase
         .from('participant_answers')
         .select('answer_index, is_correct, points_earned')
         .eq('session_id', sessionId)
         .eq('participant_id', participantId)
         .eq('question_index', currentQuestion.index)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      const answer = answers?.[0];
+      console.log('Displaying result for answer:', answer);
     
       if (answer && answer.is_correct !== null) {
         // Récupérer le score total mis à jour depuis le serveur
