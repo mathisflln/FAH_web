@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: "Host Grotesk", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -78,8 +77,6 @@
           <div class="code-label">Code de la session</div>
           <div class="code-value" id="session-code">------</div>
         </div>
-
-        <div id="qrcode"></div>
         
         <p class="join-url">Les participants peuvent rejoindre sur : <br><strong id="join-url"></strong></p>
 
@@ -143,16 +140,35 @@
     async function init() {
       const params = new URLSearchParams(window.location.search);
       sessionId = params.get('session');
-
+    
       if (!sessionId) {
         alert('Session invalide');
         window.location.href = 'dashboard.html';
         return;
       }
-
+    
       await loadSession();
       subscribeToParticipants();
       subscribeToAnswers();
+      await restoreState(); // AJOUTER CETTE LIGNE
+    }
+
+    async function restoreState() {
+      const { data: session } = await supabase
+        .from('live_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+    
+      if (!session) return;
+    
+      if (session.status === 'active' && session.current_question_index >= 0) {
+        document.getElementById('waiting-screen').style.display = 'none';
+        document.getElementById('question-screen').style.display = 'block';
+        showQuestion(session.current_question_index);
+      } else if (session.status === 'finished') {
+        showFinalResults();
+      }
     }
 
     async function loadSession() {
@@ -177,12 +193,6 @@
 
         const joinUrl = `${window.location.origin}/player.html?code=${session.code}`;
         document.getElementById('join-url').textContent = joinUrl;
-
-        // Generate QR code
-        QRCode.toCanvas(document.getElementById('qrcode'), joinUrl, {
-          width: 200,
-          margin: 2
-        });
 
       } catch (err) {
         console.error('Error loading session:', err);
@@ -380,9 +390,9 @@
     
       for (const answer of answers) {
         if (answer.answer_index === question.correctIndex) {
-          // Calculate points: base 1000 + time bonus (up to 500)
-          const timeBonus = Math.max(0, Math.round((1 - (answer.response_time / maxTime)) * 500));
-          const points = 1000 + timeBonus;
+          // Points progressifs : 1000 points instantanés, diminue linéairement jusqu'à 0
+          const timeRatio = Math.max(0, 1 - (answer.response_time / maxTime));
+          const points = Math.round(1000 * timeRatio);
     
           // Récupérer le score actuel du participant
           const { data: participant } = await supabase
@@ -493,6 +503,8 @@
     }
 
     init();
+
+    
   </script>
 </body>
 </html>
