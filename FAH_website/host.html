@@ -392,9 +392,9 @@
     
       for (const answer of answers) {
         if (answer.answer_index === question.correctIndex) {
-          // Calculate points: décroissance linéaire de 1000 à 0
-          const timeRatio = Math.min(1, answer.response_time / maxTime); // 0 = instantané, 1 = temps écoulé
-          const points = Math.round(100 + 900 * (1 - timeRatio)); // De 1000 à 100 points
+          // Décroissance linéaire de 1000 à 100
+          const timeRatio = Math.min(1, answer.response_time / maxTime);
+          const points = Math.max(100, Math.round(1000 - (900 * timeRatio))); // 1000 → 100
     
           // Récupérer le score actuel du participant
           const { data: participant } = await supabase
