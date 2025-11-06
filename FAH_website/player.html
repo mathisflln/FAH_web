@@ -359,13 +359,8 @@
         optionsGrid.appendChild(btn);
       });
     
-      // Calculer le temps restant basé sur l'heure de début du serveur
-      const timeLimit = currentQuestion.timeLimit || 30;
-      const elapsedTime = Math.floor((Date.now() - questionStartTime) / 1000);
-      const remainingTime = Math.max(0, timeLimit - elapsedTime);
-    
-      // Start timer avec le temps restant synchronisé
-      startTimer(remainingTime);
+      // Start timer normalement
+      startTimer(currentQuestion.timeLimit || 30);
     }
 
     let currentTimerInterval = null;
