@@ -463,16 +463,51 @@
             response_time: responseTime
           }]);
     
-        // Le résultat sera affiché automatiquement via la subscription
-        // quand l'hôte aura évalué la réponse
+        // NOUVEAU : Vérifier régulièrement si la réponse a été évaluée
+        pollForResult();
     
       } catch (err) {
         console.error('Error submitting answer:', err);
       }
     }
 
+    let pollInterval = null;
+
+    function pollForResult() {
+      let attempts = 0;
+      const maxAttempts = 60; // 30 secondes max (60 * 500ms)
+      
+      pollInterval = setInterval(async () => {
+        attempts++;
+        console.log(`Polling attempt ${attempts}...`);
+        
+        const { data: answers } = await supabase
+          .from('participant_answers')
+          .select('is_correct, points_earned')
+          .eq('session_id', sessionId)
+          .eq('participant_id', participantId)
+          .eq('question_index', currentQuestion.index)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        const answer = answers?.[0];
+        
+        if (answer && answer.is_correct !== null) {
+          console.log('Result found!', answer);
+          clearInterval(pollInterval);
+          await displayQuestionResult();
+        }
+        
+        if (attempts >= maxAttempts) {
+          console.log('Max polling attempts reached');
+          clearInterval(pollInterval);
+        }
+      }, 500); // Vérifier toutes les 500ms
+    }
+
     // FONCTION CORRIGÉE : Affiche le résultat quand l'hôte a évalué la réponse
     async function displayQuestionResult() {
+      if (pollInterval) clearInterval(pollInterval); // AJOUTER CETTE LIGNE
       // Récupérer la réponse du participant
       const { data: answers } = await supabase
         .from('participant_answers')
