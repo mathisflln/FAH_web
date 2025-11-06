@@ -403,17 +403,34 @@
     }
 
     async function displayQuestionResult() {
-      // Attendre un peu pour que le serveur ait le temps de calculer les scores
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Afficher message d'attente pendant le calcul
+      const resultEl = document.getElementById('result-message');
+      resultEl.innerHTML = '<div class="spinner"></div><div style="color: #667eea; margin-top: 15px;">Calcul des scores...</div>';
+      resultEl.style.display = 'block';
     
-      // Récupérer la réponse du participant
-      const { data: answer } = await supabase
-        .from('participant_answers')
-        .select('answer_index, is_correct, points_earned')
-        .eq('session_id', sessionId)
-        .eq('participant_id', participantId)
-        .eq('question_index', currentQuestion.index || 0)
-        .maybeSingle();
+      // Attendre que le serveur ait calculé les scores (polling)
+      let answer = null;
+      let attempts = 0;
+      const maxAttempts = 50; // 5 secondes max
+    
+      while (attempts < maxAttempts) {
+        const { data } = await supabase
+          .from('participant_answers')
+          .select('answer_index, is_correct, points_earned')
+          .eq('session_id', sessionId)
+          .eq('participant_id', participantId)
+          .eq('question_index', currentQuestion.index || 0)
+          .maybeSingle();
+    
+        // Vérifier si le score a été calculé (is_correct n'est plus null)
+        if (data && data.is_correct !== null) {
+          answer = data;
+          break;
+        }
+    
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
     
       if (answer) {
         // Récupérer le score total mis à jour depuis le serveur
