@@ -369,44 +369,56 @@
     async function updateScores() {
       const question = quizData.questions[currentQuestionIndex];
       const maxTime = (question.timeLimit || 30) * 1000;
-
+    
       const { data: answers } = await supabase
         .from('participant_answers')
         .select('*')
         .eq('session_id', sessionId)
         .eq('question_index', currentQuestionIndex);
-
+    
       if (!answers) return;
-
+    
       for (const answer of answers) {
         if (answer.answer_index === question.correctIndex) {
           // Calculate points: base 1000 + time bonus (up to 500)
           const timeBonus = Math.max(0, Math.round((1 - (answer.response_time / maxTime)) * 500));
           const points = 1000 + timeBonus;
-
+    
+          // Récupérer le score actuel du participant
           const { data: participant } = await supabase
             .from('session_participants')
             .select('score')
             .eq('id', answer.participant_id)
             .single();
-
+    
+          // Mettre à jour avec le score cumulé
+          const newScore = (participant?.score || 0) + points;
+          
           await supabase
             .from('session_participants')
-            .update({ score: (participant.score || 0) + points })
+            .update({ score: newScore })
             .eq('id', answer.participant_id);
-
+    
+          // Mettre à jour la réponse avec les informations
           await supabase
             .from('participant_answers')
-            .update({ is_correct: true, points_earned: points })
+            .update({ 
+              is_correct: true, 
+              points_earned: points 
+            })
             .eq('id', answer.id);
         } else {
+          // Mauvaise réponse
           await supabase
             .from('participant_answers')
-            .update({ is_correct: false, points_earned: 0 })
+            .update({ 
+              is_correct: false, 
+              points_earned: 0 
+            })
             .eq('id', answer.id);
         }
       }
-
+    
       await loadParticipants();
     }
 
