@@ -415,12 +415,13 @@
           console.log('Actual response time:', actualResponseTime, 'ms');
           console.log('Max time:', maxTime, 'ms');
           
-          // Sécurité : limiter le temps de réponse au temps maximum de la question
-          const validResponseTime = Math.max(0, Math.min(actualResponseTime, maxTime));
+          // Sécurité : si le temps est négatif ou trop grand, utiliser un temps par défaut
+          const validResponseTime = (actualResponseTime > 0 && actualResponseTime <= maxTime) 
+            ? actualResponseTime 
+            : maxTime;
           
           // Décroissance linéaire : 1000 points si instantané, 100 points à la fin
-          // timeRatio varie de 0 (instantané) à 1 (temps max)
-          const timeRatio = validResponseTime / maxTime;
+          const timeRatio = Math.min(1, validResponseTime / maxTime);
           console.log('Time ratio:', timeRatio);
           
           // Plus le temps est proche de 0, plus on a de points
