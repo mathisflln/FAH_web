@@ -400,14 +400,28 @@
       const questionStartTime = new Date(session.question_start_time).getTime();
       
       for (const answer of answers) {
+        console.log('=== DEBUG ANSWER ===');
+        console.log('Answer created_at:', answer.created_at);
+        console.log('Question start time:', session.question_start_time);
+        console.log('Answer response_time (client):', answer.response_time);
+        
         if (answer.answer_index === question.correctIndex) {
           // Calculer le temps de réponse basé sur les timestamps serveur
           const answerTime = new Date(answer.created_at).getTime();
           const actualResponseTime = answerTime - questionStartTime;
           
+          console.log('Answer time (ms):', answerTime);
+          console.log('Question start (ms):', questionStartTime);
+          console.log('Actual response time:', actualResponseTime, 'ms');
+          console.log('Max time:', maxTime, 'ms');
+          
           // Décroissance linéaire de 1000 à 100
           const timeRatio = Math.min(1, actualResponseTime / maxTime);
+          console.log('Time ratio:', timeRatio);
+          
           const points = Math.max(100, Math.round(1000 - (900 * timeRatio)));
+          console.log('Points calculés:', points);
+          console.log('===================');
     
           // Récupérer le score actuel du participant
           const { data: participant } = await supabase
