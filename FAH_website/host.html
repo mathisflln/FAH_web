@@ -397,16 +397,16 @@
         .eq('id', sessionId)
         .single();
       
+      // Convertir en UTC pour éviter les problèmes de fuseau horaire
       const questionStartTime = new Date(session.question_start_time).getTime();
       
       for (const answer of answers) {
         console.log('=== DEBUG ANSWER ===');
         console.log('Answer created_at:', answer.created_at);
         console.log('Question start time:', session.question_start_time);
-        console.log('Answer response_time (client):', answer.response_time);
         
         if (answer.answer_index === question.correctIndex) {
-          // Calculer le temps de réponse basé sur les timestamps serveur
+          // Calculer le temps de réponse basé UNIQUEMENT sur les timestamps serveur (UTC)
           const answerTime = new Date(answer.created_at).getTime();
           const actualResponseTime = answerTime - questionStartTime;
           
@@ -415,8 +415,13 @@
           console.log('Actual response time:', actualResponseTime, 'ms');
           console.log('Max time:', maxTime, 'ms');
           
+          // Sécurité : si le temps est négatif ou trop grand, utiliser un temps par défaut
+          const validResponseTime = (actualResponseTime > 0 && actualResponseTime <= maxTime) 
+            ? actualResponseTime 
+            : maxTime;
+          
           // Décroissance linéaire de 1000 à 100
-          const timeRatio = Math.min(1, actualResponseTime / maxTime);
+          const timeRatio = Math.min(1, validResponseTime / maxTime);
           console.log('Time ratio:', timeRatio);
           
           const points = Math.max(100, Math.round(1000 - (900 * timeRatio)));
