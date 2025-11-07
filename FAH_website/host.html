@@ -411,7 +411,7 @@
         .single();
       
       // Convertir en UTC pour éviter les problèmes de fuseau horaire
-      const questionStartTime = new Date(session.question_start_time + (session.question_start_time.includes('Z') ? '' : 'Z')).getTime();
+      const questionStartTime = new Date(session.question_start_time).getTime();
       
       for (const answer of answers) {
         console.log('=== DEBUG ANSWER ===');
@@ -420,8 +420,7 @@
         
         if (answer.answer_index === question.correctIndex) {
           // Calculer le temps de réponse basé UNIQUEMENT sur les timestamps serveur (UTC)
-          const answerTimeStr = answer.created_at + (answer.created_at.includes('Z') ? '' : 'Z');
-          const answerTime = new Date(answerTimeStr).getTime();
+          const answerTime = new Date(answer.created_at).getTime();
           const actualResponseTime = answerTime - questionStartTime;
           
           console.log('=== CALCUL DÉTAILLÉ ===');
