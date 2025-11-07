@@ -466,14 +466,6 @@
       if (hasAnswered) return;
       hasAnswered = true;
     
-      const responseTime = Date.now() - questionStartTime;
-
-      console.log('=== DEBUG PLAYER ===');
-      console.log('Response time:', responseTime, 'ms');
-      console.log('Question start:', questionStartTime);
-      console.log('Now:', Date.now());
-      console.log('====================');
-    
       // Visual feedback - juste sélectionner, pas de résultat
       const buttons = document.querySelectorAll('.option-btn');
       buttons.forEach((btn, i) => {
@@ -488,7 +480,7 @@
       resultEl.innerHTML = '<div class="result-icon">⏳</div><div style="color: #667eea;">Réponse enregistrée ! En attente des résultats...</div>';
       resultEl.style.display = 'block';
     
-      // Submit answer (sans afficher le résultat)
+      // Submit answer (le temps sera calculé par le serveur via created_at)
       try {
         await supabase
           .from('participant_answers')
@@ -496,15 +488,14 @@
             session_id: sessionId,
             participant_id: participantId,
             question_index: currentQuestion.index || 0,
-            answer_index: answerIndex,
-            response_time: responseTime
+            answer_index: answerIndex
           }]);
     
       } catch (err) {
         console.error('Error submitting answer:', err);
       }
     }
-
+    
     function disableOptions() {
       document.querySelectorAll('.option-btn').forEach(btn => {
         btn.disabled = true;
