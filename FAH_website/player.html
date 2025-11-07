@@ -467,6 +467,12 @@
       hasAnswered = true;
     
       const responseTime = Date.now() - questionStartTime;
+
+      console.log('=== DEBUG PLAYER ===');
+      console.log('Response time:', responseTime, 'ms');
+      console.log('Question start:', questionStartTime);
+      console.log('Now:', Date.now());
+      console.log('====================');
     
       // Visual feedback - juste sélectionner, pas de résultat
       const buttons = document.querySelectorAll('.option-btn');
