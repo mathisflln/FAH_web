@@ -419,9 +419,12 @@
         console.log('Question start time:', session.question_start_time);
         
         if (answer.answer_index === question.correctIndex) {
-          // Calculer le temps de réponse basé UNIQUEMENT sur les timestamps serveur (UTC)
+          // Calculer le temps de réponse
           const answerTime = new Date(answer.created_at).getTime();
-          const actualResponseTime = answerTime - questionStartTime - 3600000;
+          const rawResponseTime = answerTime - questionStartTime;
+          
+          // Correction du décalage UTC (soustraire 1 heure = 3600000 ms)
+          const actualResponseTime = rawResponseTime - 3600000;
           
           console.log('=== CALCUL DÉTAILLÉ ===');
           console.log('Answer created_at STRING:', answer.created_at);
