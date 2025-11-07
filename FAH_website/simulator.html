@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulateur Quiz - 30 Participants</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      min-height: 100vh; 
+      padding: 20px; 
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 20px; color: #0d0d0d; }
+    .input-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+    input { 
+      width: 100%; 
+      padding: 15px; 
+      border: 2px solid #e5e5e5; 
+      border-radius: 10px; 
+      font-size: 1rem; 
+    }
+    .btn { 
+      width: 100%; 
+      padding: 15px; 
+      border: none; 
+      border-radius: 50px; 
+      background: #0d0d0d; 
+      color: white; 
+      font-size: 1rem; 
+      font-weight: 600; 
+      cursor: pointer; 
+      margin-bottom: 10px;
+    }
+    .btn:hover { background: #2d2d2d; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-stop { background: #e74c3c; }
+    .btn-stop:hover { background: #c0392b; }
+    .status { 
+      background: #f8f9fa; 
+      padding: 20px; 
+      border-radius: 10px; 
+      margin-top: 20px; 
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .log { 
+      padding: 8px; 
+      margin-bottom: 5px; 
+      border-radius: 5px; 
+      font-size: 0.9rem;
+    }
+    .log-info { background: #e3f2fd; color: #1565c0; }
+    .log-success { background: #e8f5e9; color: #2e7d32; }
+    .log-error { background: #ffebee; color: #c62828; }
+    .participants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .participant-card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid #e5e5e5;
+      text-align: center;
+    }
+    .participant-card.active {
+      border-color: #2ecc71;
+      background: #e8f5e9;
+    }
+    .participant-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .participant-status {
+      font-size: 0.85rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>🤖 Simulateur de 30 Participants</h1>
+      
+      <div class="input-group">
+        <label for="session-code">Code de session</label>
+        <input type="text" id="session-code" placeholder="123456" maxlength="6">
+      </div>
+
+      <div class="input-group">
+        <label for="num-bots">Nombre de bots (1-50)</label>
+        <input type="number" id="num-bots" value="30" min="1" max="50">
+      </div>
+
+      <button class="btn" id="start-btn">🚀 Démarrer la simulation</button>
+      <button class="btn btn-stop" id="stop-btn" style="display:none;">⏹️ Arrêter la simulation</button>
+
+      <div id="participants-display" class="participants-grid"></div>
+
+      <div class="status" id="status">
+        <div class="log log-info">En attente de démarrage...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://ckfdysasgawyixbxjyfz.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZmR5c2FzZ2F3eWl4YnhqeWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5ODg1NjcsImV4cCI6MjA3NzU2NDU2N30.t0ubaRk5sz7kewyEsOg4CpFvj47S9U1J1SP_3DQBmE8";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let bots = [];
+    let sessionId = null;
+    let quizData = null;
+    let isRunning = false;
+    let sessionChannel = null;
+
+    const names = [
+      "Alice", "Bob", "Charlie", "Diana", "Emma", "Frank", "Grace", "Hugo",
+      "Iris", "Jack", "Kate", "Leo", "Mia", "Noah", "Olivia", "Paul",
+      "Quinn", "Rose", "Sam", "Tina", "Uma", "Victor", "Wendy", "Xavier",
+      "Yara", "Zoe", "Adam", "Bella", "Carl", "Daisy", "Eric", "Fiona",
+      "George", "Hannah", "Ian", "Julia", "Kevin", "Luna", "Max", "Nina",
+      "Oscar", "Penny", "Quinn", "Ruby", "Steve", "Tara", "Ugo", "Vera",
+      "Will", "Xena", "Yuki", "Zara"
+    ];
+
+    function log(message, type = 'info') {
+      const statusEl = document.getElementById('status');
+      const logEl = document.createElement('div');
+      logEl.className = `log log-${type}`;
+      logEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      statusEl.insertBefore(logEl, statusEl.firstChild);
+    }
+
+    function updateParticipantDisplay() {
+      const display = document.getElementById('participants-display');
+      display.innerHTML = bots.map(bot => `
+        <div class="participant-card ${bot.hasAnswered ? 'active' : ''}">
+          <div class="participant-name">${bot.nickname}</div>
+          <div class="participant-status">${bot.hasAnswered ? '✓ Répondu' : '⏳ En attente'}</div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('start-btn').addEventListener('click', startSimulation);
+    document.getElementById('stop-btn').addEventListener('click', stopSimulation);
+
+    async function startSimulation() {
+      const code = document.getElementById('session-code').value.trim();
+      const numBots = parseInt(document.getElementById('num-bots').value);
+
+      if (!code) {
+        log('Veuillez entrer un code de session', 'error');
+        return;
+      }
+
+      if (numBots < 1 || numBots > 50) {
+        log('Le nombre de bots doit être entre 1 et 50', 'error');
+        return;
+      }
+
+      try {
+        // Find session
+        const { data: session, error: sessionError } = await supabase
+          .from('live_sessions')
+          .select('*, quizzes(*)')
+          .eq('code', code)
+          .single();
+
+        if (sessionError || !session) {
+          log('Code de session invalide', 'error');
+          return;
+        }
+
+        sessionId = session.id;
+        const quiz = session.quizzes;
+        quizData = {
+          ...quiz,
+          questions: typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions
+        };
+
+        log(`Session trouvée : ${quizData.title}`, 'success');
+
+        // Create bots
+        bots = [];
+        for (let i = 0; i < numBots; i++) {
+          const nickname = `${names[i % names.length]}${Math.floor(i / names.length) > 0 ? Math.floor(i / names.length) : ''}`;
+          
+          const { data: participant, error } = await supabase
+            .from('session_participants')
+            .insert([{
+              session_id: sessionId,
+              nickname: nickname,
+              score: 0
+            }])
+            .select()
+            .single();
+
+          if (!error && participant) {
+            bots.push({
+              id: participant.id,
+              nickname: nickname,
+              score: 0,
+              hasAnswered: false
+            });
+          }
+        }
+
+        log(`${bots.length} bots créés et connectés`, 'success');
+        updateParticipantDisplay();
+
+        // Subscribe to session updates
+        subscribeToSession();
+
+        isRunning = true;
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('stop-btn').style.display = 'block';
+        document.getElementById('session-code').disabled = true;
+        document.getElementById('num-bots').disabled = true;
+
+      } catch (err) {
+        log('Erreur : ' + err.message, 'error');
+      }
+    }
+
+    function subscribeToSession() {
+      sessionChannel = supabase
+        .channel('bot-session-updates')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_sessions',
+          filter: `id=eq.${sessionId}`
+        }, async (payload) => {
+          const session = payload.new;
+          
+          if (session.status === 'active' && session.current_question_index >= 0) {
+            log(`Question ${session.current_question_index + 1} détectée`, 'info');
+            await handleQuestion(session);
+          } else if (session.status === 'finished') {
+            log('Quiz terminé !', 'success');
+            await stopSimulation();
+          }
+        })
+        .subscribe();
+    }
+
+    async function handleQuestion(session) {
+      const question = quizData.questions[session.current_question_index];
+      const timeLimit = (question.timeLimit || 30) * 1000;
+
+      // Reset answered status
+      bots.forEach(bot => bot.hasAnswered = false);
+      updateParticipantDisplay();
+
+      // Each bot answers at a random time
+      for (const bot of bots) {
+        const delay = Math.random() * (timeLimit * 0.8); // Answer within 80% of time limit
+        
+        setTimeout(async () => {
+          if (!isRunning) return;
+
+          // Random answer (70% correct, 30% wrong for realism)
+          const isCorrect = Math.random() < 0.7;
+          const answerIndex = isCorrect 
+            ? question.correctIndex 
+            : (question.correctIndex + 1 + Math.floor(Math.random() * (question.options.length - 1))) % question.options.length;
+
+          try {
+            await supabase
+              .from('participant_answers')
+              .insert([{
+                session_id: sessionId,
+                participant_id: bot.id,
+                question_index: session.current_question_index,
+                answer_index: answerIndex
+              }]);
+
+            bot.hasAnswered = true;
+            updateParticipantDisplay();
+          } catch (err) {
+            console.error('Error submitting answer:', err);
+          }
+        }, delay);
+      }
+
+      log(`${bots.length} bots répondent à la question...`, 'info');
+    }
+
+    async function stopSimulation() {
+      isRunning = false;
+
+      if (sessionChannel) {
+        await sessionChannel.unsubscribe();
+      }
+
+      // Delete all bot participants
+      if (bots.length > 0) {
+        const botIds = bots.map(b => b.id);
+        await supabase
+          .from('session_participants')
+          .delete()
+          .in('id', botIds);
+        
+        log(`${bots.length} bots supprimés`, 'info');
+      }
+
+      bots = [];
+      updateParticipantDisplay();
+
+      document.getElementById('start-btn').style.display = 'block';
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('session-code').disabled = false;
+      document.getElementById('num-bots').disabled = false;
+
+      log('Simulation arrêtée', 'info');
+    }
+  </script>
+</body>
+</html>
