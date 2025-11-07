@@ -410,24 +410,37 @@
           const answerTime = new Date(answer.created_at).getTime();
           const actualResponseTime = answerTime - questionStartTime;
           
+          console.log('=== CALCUL DÉTAILLÉ ===');
+          console.log('Answer created_at STRING:', answer.created_at);
+          console.log('Question start STRING:', session.question_start_time);
           console.log('Answer time (ms):', answerTime);
           console.log('Question start (ms):', questionStartTime);
           console.log('Actual response time:', actualResponseTime, 'ms');
+          console.log('Actual response time (seconds):', (actualResponseTime / 1000).toFixed(2), 's');
           console.log('Max time:', maxTime, 'ms');
+          console.log('Max time (seconds):', (maxTime / 1000).toFixed(2), 's');
+          
+          // Vérifier si le temps est valide
+          console.log('Time is positive?', actualResponseTime > 0);
+          console.log('Time is within limit?', actualResponseTime <= maxTime);
           
           // Sécurité : si le temps est négatif ou trop grand, utiliser un temps par défaut
           const validResponseTime = (actualResponseTime > 0 && actualResponseTime <= maxTime) 
             ? actualResponseTime 
             : maxTime;
           
+          console.log('Valid response time used:', validResponseTime, 'ms');
+          console.log('Valid response time (seconds):', (validResponseTime / 1000).toFixed(2), 's');
+          
           // Décroissance linéaire : 1000 points si instantané, 100 points à la fin
-          const timeRatio = Math.min(1, validResponseTime / maxTime);
-          console.log('Time ratio:', timeRatio);
+          const timeRatio = validResponseTime / maxTime;
+          console.log('Time ratio (before min):', timeRatio);
+          console.log('Time ratio (after min):', Math.min(1, timeRatio));
           
           // Plus le temps est proche de 0, plus on a de points
           // timeRatio = 0 (instantané) → points = 1000
           // timeRatio = 1 (temps max) → points = 100
-          const points = Math.round(1000 - (900 * timeRatio));
+          const points = Math.round(1000 - (900 * Math.min(1, timeRatio)));
           console.log('Points calculés:', points);
           console.log('===================');
     
