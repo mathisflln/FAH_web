@@ -67,6 +67,8 @@
     .empty-participants { text-align: center; color: #999; padding: 20px; }
     .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .response-counter { text-align: center; font-size: 1.5rem; font-weight: 600; color: #667eea; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+    .response-counter-number { font-size: 2rem; font-weight: 700; color: #2ecc71; }
   </style>
 </head>
 <body>
@@ -98,6 +100,9 @@
         <div class="question-header">
           <div class="question-number">Question <span id="current-question">1</span>/<span id="total-questions">10</span></div>
           <div class="timer" id="timer">30</div>
+          <div class="response-counter" id="response-counter">
+            <span class="response-counter-number" id="response-count">0</span> / <span id="total-participants">0</span> réponses
+          </div>
         </div>
 
         <div class="question-text" id="question-text"></div>
@@ -139,6 +144,7 @@
     let timerInterval = null;
     let questionStartTime = null;
     let participants = [];
+    let answersChannel = null;
 
     async function init() {
       const params = new URLSearchParams(window.location.search);
@@ -247,13 +253,18 @@
     async function showQuestion(index) {
       currentQuestionIndex = index;
       const question = quizData.questions[index];
-
+    
       document.getElementById('current-question').textContent = index + 1;
       document.getElementById('question-text').textContent = question.question;
       document.getElementById('response-stats').style.display = 'none';
       document.getElementById('leaderboard').style.display = 'none';
       document.getElementById('next-btn').style.display = 'none';
-
+      
+      // Reset et afficher le compteur de réponses
+      document.getElementById('response-count').textContent = '0';
+      document.getElementById('total-participants').textContent = participants.length;
+      document.getElementById('response-counter').style.display = 'block';
+    
       const optionsGrid = document.getElementById('options-grid');
       optionsGrid.innerHTML = '';
       
@@ -264,7 +275,7 @@
         div.textContent = opt;
         optionsGrid.appendChild(div);
       });
-
+    
       questionStartTime = Date.now();
       
       await supabase
@@ -274,10 +285,13 @@
           question_start_time: new Date().toISOString()
         })
         .eq('id', sessionId);
-
+    
+      // S'abonner aux réponses en temps réel pour cette question
+      subscribeToCurrentQuestionAnswers();
+    
       startTimer(question.timeLimit || 30);
     }
-
+    
     function startTimer(seconds) {
       let timeLeft = seconds;
       const timerEl = document.getElementById('timer');
@@ -314,8 +328,54 @@
         .subscribe();
     }
 
+    function subscribeToCurrentQuestionAnswers() {
+      // Se désabonner du canal précédent s'il existe
+      if (answersChannel) {
+        supabase.removeChannel(answersChannel);
+      }
+    
+      // Créer un nouveau canal pour cette question
+      answersChannel = supabase
+        .channel(`answers-q${currentQuestionIndex}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'participant_answers',
+          filter: `session_id=eq.${sessionId}`
+        }, async (payload) => {
+          // Vérifier que c'est bien pour la question actuelle
+          if (payload.new.question_index === currentQuestionIndex) {
+            await updateResponseCounter();
+          }
+        })
+        .subscribe();
+    
+      // Charger le compteur initial
+      updateResponseCounter();
+    }
+    
+    async function updateResponseCounter() {
+      const { data: answers, error } = await supabase
+        .from('participant_answers')
+        .select('id')
+        .eq('session_id', sessionId)
+        .eq('question_index', currentQuestionIndex);
+    
+      if (!error && answers) {
+        document.getElementById('response-count').textContent = answers.length;
+      }
+    }
+
     async function showResults() {
       clearInterval(timerInterval);
+
+      // Se désabonner du canal des réponses
+      if (answersChannel) {
+        supabase.removeChannel(answersChannel);
+      }
+    
+      // Cacher le compteur de réponses
+      document.getElementById('response-counter').style.display = 'none';
     
       // Afficher un écran de chargement
       const questionText = document.getElementById('question-text');
