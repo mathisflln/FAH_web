@@ -80,8 +80,6 @@
           <div class="code-label">Code de la session</div>
           <div class="code-value" id="session-code">------</div>
         </div>
-
-        <div id="qrcode"></div>
         
         <p class="join-url">Les participants peuvent rejoindre sur : <br><strong id="join-url"></strong></p>
 
@@ -179,12 +177,6 @@
 
         const joinUrl = `${window.location.origin}/player.html?code=${session.code}`;
         document.getElementById('join-url').textContent = joinUrl;
-
-        // Generate QR code
-        QRCode.toCanvas(document.getElementById('qrcode'), joinUrl, {
-          width: 200,
-          margin: 2
-        });
 
       } catch (err) {
         console.error('Error loading session:', err);
