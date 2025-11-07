@@ -420,11 +420,14 @@
             ? actualResponseTime 
             : maxTime;
           
-          // Décroissance linéaire de 1000 à 100
+          // Décroissance linéaire : 1000 points si instantané, 100 points à la fin
           const timeRatio = Math.min(1, validResponseTime / maxTime);
           console.log('Time ratio:', timeRatio);
           
-          const points = Math.max(100, Math.round(1000 - (900 * timeRatio)));
+          // Plus le temps est proche de 0, plus on a de points
+          // timeRatio = 0 (instantané) → points = 1000
+          // timeRatio = 1 (temps max) → points = 100
+          const points = Math.round(1000 - (900 * timeRatio));
           console.log('Points calculés:', points);
           console.log('===================');
     
