@@ -380,7 +380,7 @@
 
     async function updateScores() {
       const question = quizData.questions[currentQuestionIndex];
-      const maxTime = (question.timeLimit || 30) * 1000;
+      const maxTime = (question.timeLimit || 30) * 1000; // en millisecondes
     
       const { data: answers } = await supabase
         .from('participant_answers')
