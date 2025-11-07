@@ -400,6 +400,8 @@
       }
     
       console.log('Fetched answers:', answers);
+      console.log('First answer object:', JSON.stringify(answers[0], null, 2));
+      console.log('First answer keys:', Object.keys(answers[0]));
     
       // Récupérer le temps de début de la question depuis la session
       const { data: session } = await supabase
