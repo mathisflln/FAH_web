@@ -421,7 +421,7 @@
         if (answer.answer_index === question.correctIndex) {
           // Calculer le temps de réponse basé UNIQUEMENT sur les timestamps serveur (UTC)
           const answerTime = new Date(answer.created_at).getTime();
-          const actualResponseTime = answerTime - questionStartTime;
+          const actualResponseTime = answerTime - questionStartTime - 3600000;
           
           console.log('=== CALCUL DÉTAILLÉ ===');
           console.log('Answer created_at STRING:', answer.created_at);
