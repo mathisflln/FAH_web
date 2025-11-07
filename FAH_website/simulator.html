@@ -263,8 +263,9 @@
       updateParticipantDisplay();
 
       // Each bot answers at a random time
-      for (const bot of bots) {
-        const delay = Math.random() * (timeLimit * 0.8); // Answer within 80% of time limit
+      for (let i = 0; i < bots.length; i++) {
+        const bot = bots[i];
+        const delay = Math.random() * (timeLimit * 0.8) + (i * 50); // Add 50ms spacing between bots
         
         setTimeout(async () => {
           if (!isRunning) return;
