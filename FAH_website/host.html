@@ -382,13 +382,24 @@
       const question = quizData.questions[currentQuestionIndex];
       const maxTime = (question.timeLimit || 30) * 1000; // en millisecondes
     
-      const { data: answers } = await supabase
+      // IMPORTANT: Sélectionner TOUTES les colonnes, y compris created_at
+      const { data: answers, error: answersError } = await supabase
         .from('participant_answers')
         .select('*')
         .eq('session_id', sessionId)
         .eq('question_index', currentQuestionIndex);
     
-      if (!answers) return;
+      if (answersError) {
+        console.error('Error fetching answers:', answersError);
+        return;
+      }
+    
+      if (!answers || answers.length === 0) {
+        console.log('No answers found for this question');
+        return;
+      }
+    
+      console.log('Fetched answers:', answers);
     
       // Récupérer le temps de début de la question depuis la session
       const { data: session } = await supabase
