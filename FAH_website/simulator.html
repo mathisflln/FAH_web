@@ -217,7 +217,7 @@
         log(`${bots.length} bots créés et connectés`, 'success');
         updateParticipantDisplay();
 
-        // Subscribe to session updates
+        // Subscribe to session updates (UN SEUL CANAL pour tous les bots)
         subscribeToSession();
 
         isRunning = true;
@@ -232,8 +232,9 @@
     }
 
     function subscribeToSession() {
+      // UN SEUL CANAL pour écouter les changements de session
       sessionChannel = supabase
-        .channel('bot-session-updates')
+        .channel('simulator-session-updates')
         .on('postgres_changes', {
           event: 'UPDATE',
           schema: 'public',
@@ -275,6 +276,7 @@
             : (question.correctIndex + 1 + Math.floor(Math.random() * (question.options.length - 1))) % question.options.length;
 
           try {
+            // Juste envoyer la réponse, PAS d'abonnement temps réel
             await supabase
               .from('participant_answers')
               .insert([{
@@ -299,7 +301,7 @@
       isRunning = false;
 
       if (sessionChannel) {
-        await sessionChannel.unsubscribe();
+        await supabase.removeChannel(sessionChannel);
       }
 
       // Delete all bot participants
