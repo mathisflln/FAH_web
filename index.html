@@ -8,6 +8,32 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+
+    <script>
+      // Gestion des redirections depuis les emails Supabase
+      (function() {
+        // Vérifier s'il y a un hash dans l'URL (tokens Supabase)
+        if (window.location.hash) {
+          const hash = window.location.hash.substring(1); // Enlever le #
+          const params = new URLSearchParams(hash);
+          
+          const accessToken = params.get('access_token');
+          const type = params.get('type');
+          
+          // Si on a un token et un type, rediriger vers la bonne page
+          if (accessToken && type) {
+            if (type === 'recovery') {
+              // Réinitialisation de mot de passe
+              window.location.href = '/reset-password.html' + window.location.hash;
+            } else if (type === 'invite') {
+              // Invitation à créer un compte
+              window.location.href = '/set-password.html' + window.location.hash;
+            }
+          }
+        }
+      })();
+    </script>
+    
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
         <div class="navbar-inner">
