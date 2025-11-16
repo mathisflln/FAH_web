@@ -8,24 +8,6 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-
-<script>
-  // Rediriger IMMÉDIATEMENT les liens de réinitialisation et d'invitation
-  (function() {
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type');
-      
-      if (type === 'recovery') {
-        window.location.replace('reset-password.html' + window.location.hash);
-      } else if (type === 'invite') {
-        window.location.replace('set-password.html' + window.location.hash);
-      }
-    }
-  })();
-</script>
-
-    
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
         <div class="navbar-inner">
