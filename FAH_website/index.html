@@ -115,21 +115,6 @@
         </div>
     </section>
 
-    <script>
-      // Rediriger automatiquement les liens de réinitialisation et d'invitation
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const type = hashParams.get('type');
-        
-        if (type === 'recovery') {
-          // Lien de réinitialisation de mot de passe
-          window.location.href = 'FAH_website/reset-password.html' + window.location.hash;
-        } else if (type === 'invite') {
-          // Lien d'invitation
-          window.location.href = 'FAH_website/set-password.html' + window.location.hash;
-        }
-      }
-    </script>
 
     <script src="js/main.js"></script>
 </body>
