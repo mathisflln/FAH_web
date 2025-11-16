@@ -363,7 +363,7 @@
       if (email && email.trim()) {
         try {
           const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-            redirectTo: 'https://fah-web.vercel.app/FAH_website/reset-password.html'
+            redirectTo: 'https://fah-web.vercel.app/reset-password.html'
           });
       
         if (error) throw error;
